@@ -5,15 +5,19 @@ import session from "express-session";
 import passport from "passport";
 import dotenv from "dotenv";
 
+
 import productRoutes from "./routes/productRoutes.js";
 import cartRoutes from "./routes/cart.js";
 import authRoutes from "./routes/authRoutes.js";
 import chatbotRoutes from "./routes/chatbotRoutes.js";
 import storesRoutes from "./routes/stores.js";
 import initDatabase from "./initDB.js";
-import contactRoutes from "./routes/contactRoutes.js";
-import ordersRoutes from "./routes/orders.js";
-import emailRouter from "./routes/email.js";
+import contactRoutes from './routes/contactRoutes.js';
+import ordersRoutes from './routes/orders.js';
+import emailRouter from './routes/email.js'; // your file
+
+
+
 
 import "./config/passport.js";
 
@@ -24,34 +28,32 @@ const app = express();
 // MIDDLEWARE
 app.use(express.json());
 app.use(cookieParser());
-
-// ✅ Allow Railway + localhost
-const allowedOrigins = [
-  "http://localhost:3000",
-   "https://alkisaanfoods.vercel.app", // put your real frontend here
-];
+const allowedOrigins = ["http://localhost:3000"];
 
 app.use(cors({
-  origin: true, // allow all origins for now (simpler for testing)
-  credentials: true,
+  origin: function(origin, callback) {
+    // allow requests with no origin (like mobile apps or curl)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = `The CORS policy for this site does not allow access from the specified Origin.`;
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
+  credentials: true, // allow cookies
 }));
 
-// SESSION
+// SESSION SETUP
 app.use(session({
   secret: process.env.JWT_SECRET || "alkissan_secret",
   resave: false,
   saveUninitialized: false,
-  cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 }
+  cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 } // 30 days
 }));
 
 // PASSPORT
 app.use(passport.initialize());
 app.use(passport.session());
-
-// ✅ HEALTH ROUTE (must be BEFORE listen)
-app.get("/health", (req, res) => {
-  res.status(200).json({ status: "ok" });
-});
 
 // ROUTES
 app.use("/api/products", productRoutes);
@@ -59,23 +61,43 @@ app.use("/api/cart", cartRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api", chatbotRoutes);
 app.use("/api/stores", storesRoutes);
-app.use("/api/contact", contactRoutes);
-app.use("/api/email", emailRouter);
-app.use("/api/orders", ordersRoutes);
+app.use('/api/contact', contactRoutes);
+app.use('/api/email', emailRouter);
+
+app.use('/api/orders', ordersRoutes);
+
+// Database initialization
+initDatabase().then(() => {
+  console.log("Database initialized");
+});
+
 
 // CATCH-ALL
+// Catch-all for unmatched routes
 app.use((req, res) => {
   res.status(404).json({ message: "API route not found" });
 });
 
-// DB (don’t block server start)
-initDatabase().catch(err => {
-  console.error("❌ Database init failed:", err.message);
-});
 
-// ✅ START SERVER ON RAILWAY PORT + HOST
+// START SERVER
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`🚀 Server live on port ${PORT}`);
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+// ... other imports and setup ...
+
+// Health check endpoint - ADD THIS BEFORE YOUR OTHER ROUTES
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    service: 'E-commerce API',
+    version: '1.0.0'
+  });
 });
 
+// ... your other routes ...
+
+app.listen(PORT, () => {
+  console.log(`✅ Server running on http://localhost:${PORT}`);
+  console.log(`✅ Health check: http://localhost:${PORT}/api/health`);
+  console.log(`✅ Orders API: http://localhost:${PORT}/api/orders`);
+});
