@@ -28,7 +28,7 @@ app.use(cookieParser());
 // ✅ Allow Railway + localhost
 const allowedOrigins = [
   "http://localhost:3000",
-  "https://your-frontend-domain.com", // put your real frontend here
+   "https://alkisaanfoods.vercel.app", // put your real frontend here
 ];
 
 app.use(cors({
@@ -78,3 +78,4 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Server live on port ${PORT}`);
 });
+
