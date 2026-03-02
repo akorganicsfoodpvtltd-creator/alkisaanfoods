@@ -71,7 +71,7 @@ export default function HeroSlider() {
   };
 
   return (
-    <div className="px-8 md:px-16 pt-6 pb-4 flex flex-col md:flex-row justify-between items-center gap-6 min-h-[80vh]">
+    <div className="px-8 md:px-16 pt-6 pb-4 flex flex-col md:flex-row justify-between items-center gap-6 min-h-[80vh] bg-white dark:bg-white">
       
       {/* Image Slider */}
       <div className="w-full md:w-1/2 relative h-80 md:h-[32rem] overflow-hidden group">
