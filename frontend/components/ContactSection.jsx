@@ -129,7 +129,7 @@ export default function ContactSection() {
   };
 
   return (
-    <section id="contact" className="relative py-20 px-4 sm:px-6 lg:px-8 overflow-hidden">
+    <section id="contact" className="relative py-20 px-4 sm:px-6 lg:px-8 overflow-hidden bg-white dark:bg-white">
       {/* Background decorative elements */}
       <div className="absolute top-0 left-0 w-72 h-72 bg-green-100 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
       <div className="absolute top-0 right-0 w-72 h-72 bg-emerald-100 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
@@ -146,17 +146,17 @@ export default function ContactSection() {
             <div className="h-1 w-10 bg-green-500 rounded-full"></div>
           </div>
           
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-gray-900 mb-4">
             Contact <span className="text-green-700">Us</span>
           </h2>
           
-          <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+          <p className="text-gray-600 dark:text-gray-600 text-lg max-w-2xl mx-auto">
             Have questions about our products or services? We're here to help.
           </p>
         </div>
 
         {/* Contact Form Container */}
-        <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
+        <div className="bg-white dark:bg-white rounded-3xl shadow-2xl overflow-hidden">
           <div className="grid grid-cols-1 lg:grid-cols-3">
             {/* Left Side - Contact Info */}
             <div className="bg-gradient-to-br from-green-600 to-emerald-700 text-white p-8 md:p-12 lg:p-16">
@@ -212,14 +212,14 @@ export default function ContactSection() {
             </div>
 
             {/* Right Side - Form */}
-            <div className="lg:col-span-2 p-8 md:p-12 lg:p-16">
+            <div className="lg:col-span-2 p-8 md:p-12 lg:p-16 bg-white dark:bg-white">
               {isSubmitted ? (
                 <div className="text-center py-16">
-                  <div className="inline-flex items-center justify-center w-20 h-20 bg-green-100 rounded-full mb-6">
+                  <div className="inline-flex items-center justify-center w-20 h-20 bg-green-100 dark:bg-green-100 rounded-full mb-6">
                     <FiCheckCircle className="w-10 h-10 text-green-600" />
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-3">Message Sent Successfully!</h3>
-                  <p className="text-gray-600 mb-4 max-w-md mx-auto">
+                  <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-900 mb-3">Message Sent Successfully!</h3>
+                  <p className="text-gray-600 dark:text-gray-600 mb-4 max-w-md mx-auto">
                     Thank you for contacting Al Kissan Foods. We'll get back to you within 24 hours.
                   </p>
                   <div className="space-y-3 mb-8">
@@ -231,7 +231,7 @@ export default function ContactSection() {
                         ✓ A confirmation email has been sent to {formData.email}
                       </p>
                     )}
-                    <p className="text-gray-500 text-sm">
+                    <p className="text-gray-500 dark:text-gray-500 text-sm">
                       We'll contact you at {formData.email || 'the email you provided'} soon.
                     </p>
                   </div>
@@ -247,7 +247,7 @@ export default function ContactSection() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Name Field */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-700 mb-2">
                         Your Name <span className="text-red-500">*</span>
                       </label>
                       <div className="relative">
@@ -257,7 +257,7 @@ export default function ContactSection() {
                           name="name"
                           value={formData.name}
                           onChange={handleChange}
-                          className={`w-full pl-12 pr-4 py-3.5 border ${errors.name ? 'border-red-300' : 'border-gray-300'} rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all`}
+                          className={`w-full pl-12 pr-4 py-3.5 border ${errors.name ? 'border-red-300' : 'border-gray-300'} rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all bg-white dark:bg-white text-gray-900 dark:text-gray-900`}
                           placeholder="Full Name"
                         />
                       </div>
@@ -268,7 +268,7 @@ export default function ContactSection() {
 
                     {/* Email Field */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-700 mb-2">
                         Email Address <span className="text-red-500">*</span>
                       </label>
                       <div className="relative">
@@ -278,7 +278,7 @@ export default function ContactSection() {
                           name="email"
                           value={formData.email}
                           onChange={handleChange}
-                          className={`w-full pl-12 pr-4 py-3.5 border ${errors.email ? 'border-red-300' : 'border-gray-300'} rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all`}
+                          className={`w-full pl-12 pr-4 py-3.5 border ${errors.email ? 'border-red-300' : 'border-gray-300'} rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all bg-white dark:bg-white text-gray-900 dark:text-gray-900`}
                           placeholder="Your Email"
                         />
                       </div>
@@ -290,7 +290,7 @@ export default function ContactSection() {
 
                   {/* Subject Field */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-700 mb-2">
                       Subject <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -298,7 +298,7 @@ export default function ContactSection() {
                       name="subject"
                       value={formData.subject}
                       onChange={handleChange}
-                      className={`w-full px-4 py-3.5 border ${errors.subject ? 'border-red-300' : 'border-gray-300'} rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all`}
+                      className={`w-full px-4 py-3.5 border ${errors.subject ? 'border-red-300' : 'border-gray-300'} rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all bg-white dark:bg-white text-gray-900 dark:text-gray-900`}
                       placeholder="How can we help you?"
                     />
                     {errors.subject && (
@@ -308,7 +308,7 @@ export default function ContactSection() {
 
                   {/* Message Field */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-700 mb-2">
                       Your Message <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
@@ -319,7 +319,7 @@ export default function ContactSection() {
                         onChange={handleChange}
                         rows={5}
                         maxLength={500}
-                        className={`w-full pl-12 pr-4 py-3.5 border ${errors.message ? 'border-red-300' : 'border-gray-300'} rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all resize-none`}
+                        className={`w-full pl-12 pr-4 py-3.5 border ${errors.message ? 'border-red-300' : 'border-gray-300'} rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all resize-none bg-white dark:bg-white text-gray-900 dark:text-gray-900`}
                         placeholder="Tell us about your inquiry..."
                       />
                     </div>
@@ -327,7 +327,7 @@ export default function ContactSection() {
                       {errors.message ? (
                         <p className="text-sm text-red-600">{errors.message}</p>
                       ) : (
-                        <p className="text-xs text-gray-500">Please include relevant details</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-500">Please include relevant details</p>
                       )}
                       <span className={`text-xs ${formData.message.length < 10 ? 'text-gray-400' : 'text-green-600'}`}>
                         {formData.message.length}/500
@@ -337,7 +337,7 @@ export default function ContactSection() {
 
                   {/* Error Message */}
                   {submitError && (
-                    <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+                    <div className="bg-red-50 dark:bg-red-50 border border-red-200 dark:border-red-200 rounded-xl p-4">
                       <div className="flex items-start">
                         <svg className="w-5 h-5 text-red-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.782 16.5c-.77.833.192 2.5 1.732 2.5z" />
@@ -345,7 +345,7 @@ export default function ContactSection() {
                         <div>
                           <p className="text-red-600 text-sm font-medium mb-1">Unable to send message</p>
                           <p className="text-red-500 text-sm">{submitError}</p>
-                          <p className="text-gray-600 text-xs mt-2">
+                          <p className="text-gray-600 dark:text-gray-600 text-xs mt-2">
                             You can also contact us directly at <strong>+923004809083</strong> or email <strong>akorganicsfoodpvtltd@gmail.com</strong>
                           </p>
                         </div>
@@ -372,7 +372,7 @@ export default function ContactSection() {
                     )}
                   </button>
 
-                  <p className="text-xs text-gray-500 text-center">
+                  <p className="text-xs text-gray-500 dark:text-gray-500 text-center">
                     By submitting this form, you agree to our{" "}
                     <a href="#" className="text-green-600 hover:underline">Privacy Policy</a>
                     . We respect your privacy and will not share your information.
