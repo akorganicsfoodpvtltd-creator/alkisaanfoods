@@ -356,7 +356,7 @@ const formatPricePKR = (price) => {
     ? parseFloat(price.replace(/[^0-9.-]+/g, "")) 
     : Number(price);
   
-  if (isNaN(numericPrice)) return 'Rs. 0';
+  if (isNaN(numericPrice) || numericPrice < 0) return 'Rs. 0';
   
   return `Rs. ${numericPrice.toLocaleString('en-PK', {
     minimumFractionDigits: 0,
@@ -364,13 +364,24 @@ const formatPricePKR = (price) => {
   })}`;
 };
 
-// Helper function to extract numeric price
+// Helper function to extract numeric price - FIXED to handle 0 and negative values properly
 const extractNumericPrice = (price) => {
-  if (!price && price !== 0) return 0;
-  if (typeof price === 'number') return price;
-  if (typeof price === 'string') {
-    return parseFloat(price.replace('Rs.', '').replace('Rs', '').replace(/,/g, '').trim()) || 0;
+  if (price === null || price === undefined || price === '') return 0;
+  
+  // If it's already a number, return it (ensuring non-negative)
+  if (typeof price === 'number') {
+    return price < 0 ? 0 : price;
   }
+  
+  // If it's a string, clean it and parse
+  if (typeof price === 'string') {
+    // Remove 'Rs.', 'Rs', commas and trim
+    const cleaned = price.replace('Rs.', '').replace('Rs', '').replace(/,/g, '').trim();
+    const parsed = parseFloat(cleaned);
+    // Return 0 if NaN or negative, otherwise return the parsed value
+    return (isNaN(parsed) || parsed < 0) ? 0 : parsed;
+  }
+  
   return 0;
 };
 
@@ -991,7 +1002,7 @@ const AddProductForm = ({ isOpen, onClose, editingProduct, productForm, setProdu
       const productData = {
         name: productForm.name,
         category: productForm.category,
-        price: parseFloat(productForm.price),
+        price: parseFloat(productForm.price) || 0, // FIXED: Ensure price is a number, default to 0 if NaN
         description: productForm.description || '',
         image: finalImageUrl || null // This will be saved to database
       };
@@ -1070,8 +1081,8 @@ const AddProductForm = ({ isOpen, onClose, editingProduct, productForm, setProdu
                 <input
                   type="number"
                   required
-                  min="1"
-                  step="0.01"
+                  min="0" // FIXED: Add min attribute to prevent negative prices
+                  step="any"
                   value={productForm.price}
                   onChange={(e) => setProductForm({...productForm, price: e.target.value})}
                   className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
@@ -1393,7 +1404,7 @@ export default function AdminDashboard() {
     setProductForm({
       name: product.name,
       category: product.category,
-      price: extractNumericPrice(product.price),
+      price: extractNumericPrice(product.price), // FIXED: Now returns 0 for invalid/negative values
       description: product.description || "",
       image: product.image // Use the raw image value
     });
