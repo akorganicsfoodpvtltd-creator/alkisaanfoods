@@ -1,6 +1,6 @@
 export default function AboutSection() {
   return (
-    <div id="about" className="mt-20 px-4 sm:px-6 md:px-16 font-sans">
+    <div id="about" className="mt-20 px-4 sm:px-6 md:px-16 font-sans bg-white dark:bg-white">
       {/* Section Header */}
       <div className="text-center mb-12 md:mb-16">
         <div className="inline-flex items-center justify-center gap-3 mb-4">
@@ -11,11 +11,11 @@ export default function AboutSection() {
           <div className="h-1 w-8 sm:w-10 md:w-12 bg-green-500 rounded-full"></div>
         </div>
 
-        <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold text-gray-900 mb-4">
+        <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold text-gray-900 dark:text-gray-900 mb-4">
           About <span className="text-green-700">Al Kissan Foods</span>
         </h2>
 
-        <p className="text-gray-600 text-base sm:text-lg md:text-xl max-w-3xl mx-auto px-4">
+        <p className="text-gray-600 dark:text-gray-600 text-base sm:text-lg md:text-xl max-w-3xl mx-auto px-4">
           Where purity meets perfection in every product
         </p>
       </div>
@@ -69,7 +69,7 @@ export default function AboutSection() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 md:gap-12 mt-12 mb-20">
         
         {/* Vision Card */}
-        <div className="group relative bg-white rounded-2xl shadow-lg border border-green-100 overflow-hidden 
+        <div className="group relative bg-white dark:bg-white rounded-2xl shadow-lg border border-green-100 dark:border-green-100 overflow-hidden 
                        transition-all duration-300 ease-out hover:scale-105 hover:shadow-2xl hover:border-green-300
                        hover:z-10 min-h-[300px] flex flex-col transform hover:-translate-y-2">
           <div className="p-6 sm:p-8 flex-1 flex flex-col">
@@ -85,7 +85,7 @@ export default function AboutSection() {
               </div>
               
               <div className="mx-3 flex-1 min-w-0">
-                <h3 className="text-lg sm:text-xl md:text-2xl lg:text-2xl font-bold text-green-900 text-center leading-tight
+                <h3 className="text-lg sm:text-xl md:text-2xl lg:text-2xl font-bold text-green-900 dark:text-green-900 text-center leading-tight
                              group-hover:text-green-700 transition-colors duration-300">
                   Our Vision
                 </h3>
@@ -103,7 +103,7 @@ export default function AboutSection() {
 
             {/* Text Content */}
             <div className="px-2 flex-1 flex items-center transform group-hover:scale-105 transition-transform duration-300">
-              <p className="text-gray-800 leading-relaxed text-sm sm:text-base md:text-sm lg:text-base text-justify w-full">
+              <p className="text-gray-800 dark:text-gray-800 leading-relaxed text-sm sm:text-base md:text-sm lg:text-base text-justify w-full">
                 To become a leading and trusted food brand that delivers pure, high-quality
                 products while supporting farmers and promoting sustainable agriculture.
               </p>
@@ -117,7 +117,7 @@ export default function AboutSection() {
         </div>
 
         {/* Mission Card */}
-        <div className="group relative bg-white rounded-2xl shadow-lg border border-green-100 overflow-hidden 
+        <div className="group relative bg-white dark:bg-white rounded-2xl shadow-lg border border-green-100 dark:border-green-100 overflow-hidden 
                        transition-all duration-300 ease-out hover:scale-105 hover:shadow-2xl hover:border-green-300
                        hover:z-10 min-h-[300px] flex flex-col transform hover:-translate-y-2">
           <div className="p-6 sm:p-8 flex-1 flex flex-col">
@@ -133,7 +133,7 @@ export default function AboutSection() {
               </div>
               
               <div className="mx-3 flex-1 min-w-0">
-                <h3 className="text-lg sm:text-xl md:text-2xl lg:text-2xl font-bold text-green-900 text-center leading-tight
+                <h3 className="text-lg sm:text-xl md:text-2xl lg:text-2xl font-bold text-green-900 dark:text-green-900 text-center leading-tight
                              group-hover:text-green-700 transition-colors duration-300">
                   Our Mission
                 </h3>
@@ -151,7 +151,7 @@ export default function AboutSection() {
 
             {/* Text Content - Mission */}
             <div className="px-2 flex-1 flex items-center transform group-hover:scale-105 transition-transform duration-300">
-              <p className="text-gray-800 leading-relaxed text-xs sm:text-sm md:text-xs lg:text-sm text-justify w-full">
+              <p className="text-gray-800 dark:text-gray-800 leading-relaxed text-xs sm:text-sm md:text-xs lg:text-sm text-justify w-full">
                 To provide safe, nutritious, and high-quality food made from responsibly sourced ingredients,
                 maintaining strict quality standards and delivering products families can trust every day.
               </p>
@@ -165,7 +165,7 @@ export default function AboutSection() {
         </div>
 
         {/* Goals Card */}
-        <div className="group relative bg-white rounded-2xl shadow-lg border border-green-100 overflow-hidden 
+        <div className="group relative bg-white dark:bg-white rounded-2xl shadow-lg border border-green-100 dark:border-green-100 overflow-hidden 
                        transition-all duration-300 ease-out hover:scale-105 hover:shadow-2xl hover:border-green-300
                        hover:z-10 min-h-[300px] flex flex-col transform hover:-translate-y-2">
           <div className="p-6 sm:p-8 flex-1 flex flex-col">
@@ -181,7 +181,7 @@ export default function AboutSection() {
               </div>
               
               <div className="mx-3 flex-1 min-w-0">
-                <h3 className="text-lg sm:text-xl md:text-2xl lg:text-2xl font-bold text-green-900 text-center leading-tight
+                <h3 className="text-lg sm:text-xl md:text-2xl lg:text-2xl font-bold text-green-900 dark:text-green-900 text-center leading-tight
                              group-hover:text-green-700 transition-colors duration-300">
                   Our Goals
                 </h3>
@@ -199,7 +199,7 @@ export default function AboutSection() {
 
             {/* Text Content */}
             <div className="px-2 flex-1 flex items-center transform group-hover:scale-105 transition-transform duration-300">
-              <p className="text-gray-800 leading-relaxed text-sm sm:text-base md:text-sm lg:text-base text-justify w-full">
+              <p className="text-gray-800 dark:text-gray-800 leading-relaxed text-sm sm:text-base md:text-sm lg:text-base text-justify w-full">
                 Expand product range with innovative flour variants, achieve
                 nationwide distribution, and establish Al Kissan Foods as a symbol of
                 trust in natural food products.
