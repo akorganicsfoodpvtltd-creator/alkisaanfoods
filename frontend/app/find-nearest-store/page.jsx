@@ -10,7 +10,7 @@ export default function FindNearestStore() {
   const [userLocation, setUserLocation] = useState(null);
   const [showManualInput, setShowManualInput] = useState(false);
   const [manualCoords, setManualCoords] = useState({ lat: '', lng: '' });
-  const [locationPermission, setLocationPermission] = useState('prompt'); // 'prompt', 'granted', 'denied'
+  const [locationPermission, setLocationPermission] = useState('prompt');
 
   // Check location permission status
   useEffect(() => {
@@ -19,7 +19,6 @@ export default function FindNearestStore() {
         .then((permissionStatus) => {
           setLocationPermission(permissionStatus.state);
           
-          // Listen for permission changes
           permissionStatus.onchange = () => {
             setLocationPermission(permissionStatus.state);
           };
@@ -27,7 +26,7 @@ export default function FindNearestStore() {
     }
   }, []);
 
-  // Fetch branches from backend
+  // Fetch branches from backend - FIXED for your backend response
   const fetchBranches = async () => {
     try {
       const res = await fetch("http://localhost:5000/api/stores");
@@ -41,23 +40,55 @@ export default function FindNearestStore() {
         return [];
       }
 
-      // Normalize branch data
-      const normalizedBranches = data.map(branch => ({
-        id: branch.id || branch.store_id || Math.random(),
-        store_name: branch.store_name || branch["Store Name"] || branch.name || "Unknown Store",
-        address: branch.address || branch.Address || "",
-        city: branch.city || branch.City || "",
-        phone: branch.phone || branch.phone_number || branch["Phone Number"] || "",
-        branch_type: branch.branch_type || branch.Branch || "",
-        latitude: parseFloat(branch.latitude || branch.Latitude),
-        longitude: parseFloat(branch.longitude || branch.Longitude),
-        ...branch
-      }));
+      // Log the first item to see its structure
+      console.log("📡 First branch structure:", data[0]);
 
-      return normalizedBranches.filter(branch => 
-        !isNaN(branch.latitude) && 
-        !isNaN(branch.longitude)
-      );
+      // Normalize branch data based on actual backend response
+      const normalizedBranches = data.map(branch => {
+        // Parse coordinates - they come as latitude/longitude fields
+        const latitude = parseFloat(branch.latitude);
+        const longitude = parseFloat(branch.longitude);
+        
+        console.log(`Processing branch: ${branch.store_name}, lat: ${latitude}, lng: ${longitude}`);
+        
+        return {
+          id: branch.id || Math.random(),
+          store_name: branch.store_name || "Unknown Store",
+          address: branch.address || "",
+          city: branch.city || "",
+          phone: branch.phone || "",
+          branch_type: branch.branch_name || "",
+          store_image: branch.store_image || "",
+          latitude: latitude,
+          longitude: longitude,
+          created_at: branch.created_at || ""
+        };
+      });
+
+      // Filter valid coordinates
+      const validBranches = normalizedBranches.filter(branch => {
+        const isValid = !isNaN(branch.latitude) && 
+                       !isNaN(branch.longitude) && 
+                       branch.latitude !== null && 
+                       branch.longitude !== null;
+        
+        if (!isValid) {
+          console.warn("Invalid branch coordinates:", {
+            name: branch.store_name,
+            lat: branch.latitude,
+            lng: branch.longitude
+          });
+        }
+        return isValid;
+      });
+
+      console.log(`✅ Valid branches with coordinates: ${validBranches.length} out of ${data.length}`);
+      
+      if (validBranches.length === 0) {
+        setError("No branches with valid coordinates found. Please check database.");
+      }
+      
+      return validBranches;
 
     } catch (err) {
       console.error("❌ Fetch error:", err);
@@ -72,7 +103,11 @@ export default function FindNearestStore() {
     setError("");
 
     try {
+      console.log("🔍 Calculating nearest store for:", targetLat, targetLng);
+      
       const allBranches = await fetchBranches();
+      
+      console.log("📊 Total branches fetched:", allBranches.length);
       
       if (allBranches.length === 0) {
         setError("No valid branches with coordinates found.");
@@ -81,7 +116,7 @@ export default function FindNearestStore() {
       }
 
       const calculateDistance = (lat1, lon1, lat2, lon2) => {
-        const R = 6371;
+        const R = 6371; // Radius of the earth in km
         const dLat = (lat2 - lat1) * Math.PI / 180;
         const dLon = (lon2 - lon1) * Math.PI / 180;
         const a = 
@@ -92,12 +127,18 @@ export default function FindNearestStore() {
         return R * c;
       };
 
-      const branchesWithDistance = allBranches.map(branch => ({
-        ...branch,
-        distance: calculateDistance(targetLat, targetLng, branch.latitude, branch.longitude)
-      }));
+      const branchesWithDistance = allBranches.map(branch => {
+        const distance = calculateDistance(targetLat, targetLng, branch.latitude, branch.longitude);
+        console.log(`Distance to ${branch.store_name}: ${distance.toFixed(2)} km`);
+        return {
+          ...branch,
+          distance: distance
+        };
+      });
 
       branchesWithDistance.sort((a, b) => a.distance - b.distance);
+      
+      console.log("🏪 Nearest branch found:", branchesWithDistance[0]);
       setNearestBranch(branchesWithDistance[0]);
       setBranches(branchesWithDistance);
 
@@ -120,6 +161,7 @@ export default function FindNearestStore() {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
+          console.log("📍 Got User Location:", latitude, longitude);
           resolve({ latitude, longitude });
         },
         (error) => {
@@ -176,15 +218,6 @@ export default function FindNearestStore() {
       setError(err.message);
       setShowManualInput(true);
       setLoading(false);
-      
-      // Guide user to browser settings
-      if (err.message.includes("enable location access")) {
-        setTimeout(() => {
-          if (confirm("Would you like instructions on how to enable location access in your browser?")) {
-            alert("To enable location access:\n\n1. Click the lock/padlock icon in your browser's address bar\n2. Click 'Site settings' or 'Permissions'\n3. Find 'Location' and change it to 'Allow'\n4. Refresh this page and try again");
-          }
-        }, 500);
-      }
     }
   };
 
@@ -214,33 +247,20 @@ export default function FindNearestStore() {
     setShowManualInput(false);
   };
 
-  // Initialize on component mount
+  // Initialize on component mount - simplified
   useEffect(() => {
     const initialize = async () => {
       setLoading(true);
       
-      // Try to get location automatically if permission might be granted
-      if (locationPermission === 'granted' || locationPermission === 'prompt') {
-        try {
-          const location = await getUserLocation({ timeout: 5000 });
-          setUserLocation({ lat: location.latitude, lng: location.longitude });
-          setManualCoords({ 
-            lat: location.latitude.toString(), 
-            lng: location.longitude.toString() 
-          });
-          await calculateNearestStore(location.latitude, location.longitude);
-          return;
-        } catch (err) {
-          console.log("Auto-location failed:", err.message);
-          // Continue to show manual input
-        }
-      }
-      
-      // If auto-location fails, fetch default data
       try {
         const branches = await fetchBranches();
         setBranches(branches);
-        setError("Please enter your location or allow location access.");
+        
+        if (branches.length === 0) {
+          setError("No stores found in database.");
+        } else {
+          setError("Please enter your location or allow location access to find nearest store.");
+        }
       } catch (err) {
         setError("Failed to load store data.");
       } finally {
@@ -250,7 +270,7 @@ export default function FindNearestStore() {
     };
 
     initialize();
-  }, [locationPermission]);
+  }, []);
 
   // SVG Icons
   const LocationIcon = () => (
@@ -316,7 +336,7 @@ export default function FindNearestStore() {
 
         {/* Manual Input */}
         {showManualInput && (
-          <div className="bg-white/10 p-4 rounded-xl mt-4 animate-slideDown">
+          <div className="bg-white/10 p-4 rounded-xl mt-4">
             <p className="text-green-100 font-semibold mb-3">Enter coordinates:</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
               <div>
@@ -348,10 +368,6 @@ export default function FindNearestStore() {
             >
               🔍 Search Nearest Store
             </button>
-            
-            <div className="mt-3 text-xs text-green-200">
-              <p>💡 Tip: You can find coordinates on Google Maps by right-clicking a location</p>
-            </div>
           </div>
         )}
 
@@ -363,23 +379,6 @@ export default function FindNearestStore() {
             <p className={`${error.includes("denied") ? "text-red-100" : "text-yellow-100"}`}>
               {error}
             </p>
-            {error.includes("enable location access") && (
-              <button
-                onClick={() => {
-                  if (confirm("Open browser settings to enable location permission?")) {
-                    // Chrome/Firefox settings
-                    if (navigator.userAgent.includes("Chrome")) {
-                      window.open("chrome://settings/content/location", "_blank");
-                    } else {
-                      alert("Please go to your browser's settings and enable location permission for this site.");
-                    }
-                  }
-                }}
-                className="mt-2 text-sm underline"
-              >
-                Fix location settings
-              </button>
-            )}
           </div>
         )}
       </div>
@@ -465,11 +464,6 @@ export default function FindNearestStore() {
                   <div 
                     key={branch.id || index} 
                     className="p-4 bg-green-50 rounded-xl hover:bg-green-100 transition-all cursor-pointer"
-                    onClick={() => {
-                      setManualCoords({ lat: branch.latitude.toString(), lng: branch.longitude.toString() });
-                      setUserLocation({ lat: branch.latitude, lng: branch.longitude });
-                      calculateNearestStore(branch.latitude, branch.longitude);
-                    }}
                   >
                     <div className="font-bold text-gray-900 mb-1 line-clamp-1">
                       {branch.store_name}
@@ -508,28 +502,6 @@ export default function FindNearestStore() {
               <span>📝</span> Enter Manually
             </button>
           </div>
-        </div>
-      )}
-
-      {/* Location Help */}
-      {locationPermission === 'denied' && (
-        <div className="mt-6 bg-yellow-50 border border-yellow-200 rounded-2xl p-6">
-          <h3 className="font-bold text-yellow-800 mb-2">📍 Location Access Denied</h3>
-          <p className="text-yellow-700 mb-4">
-            You've denied location access. To use automatic location detection:
-          </p>
-          <ol className="list-decimal pl-5 text-yellow-700 space-y-1 text-sm">
-            <li>Click the lock icon 🔒 in your browser's address bar</li>
-            <li>Find "Location" settings</li>
-            <li>Change it to "Allow"</li>
-            <li>Refresh this page</li>
-          </ol>
-          <button
-            onClick={() => window.location.reload()}
-            className="mt-4 px-4 py-2 bg-yellow-500 text-white rounded-xl hover:bg-yellow-600"
-          >
-            🔄 Refresh Page
-          </button>
         </div>
       )}
     </div>
