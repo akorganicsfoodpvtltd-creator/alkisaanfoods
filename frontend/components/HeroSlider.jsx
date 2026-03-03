@@ -5,8 +5,10 @@ import { FaWhatsapp, FaArrowRight } from "react-icons/fa";
 
 import slide1 from "../assets/slide1.png";
 import slide2 from "../assets/slide2.png";
-import slide3 from "../assets/slide3.png";
+import slide3 from "../assets/slide3.jpeg";
 import slide4 from "../assets/slide4.png";
+import slide5 from "../assets/slide5.png";
+import slide6 from "../assets/slide6.png";
 
 export default function HeroSlider() {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -18,6 +20,10 @@ export default function HeroSlider() {
     { img: slide2, text: "Al Kissan Gluten Free Flour 2KG" },
     { img: slide3, text: "Al Kissan Barley Flour 1KG" },
     { img: slide4, text: "Al Kissan Multigrain Flour 5KG" },
+    { img: slide5, text: "Al Kissan Corn Flour 2KG" },
+     { img: slide6, text: "Al Kissan Chakki Atta 5KG" },
+    
+
   ];
 
   useEffect(() => {
