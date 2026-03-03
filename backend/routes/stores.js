@@ -4,7 +4,7 @@ import db from "../config/db.js";
 
 const router = express.Router();
 
-// GET /api/stores — fetch all stores for headline ticker
+// GET /api/stores — fetch all stores for headline ticker and nearest store
 router.get("/", async (req, res) => {
   try {
     console.log("📡 Fetching all stores from stores_branches table...");
@@ -13,7 +13,7 @@ router.get("/", async (req, res) => {
     const [columns] = await db.execute("SHOW COLUMNS FROM stores_branches");
     console.log("Store table columns:", columns.map(col => col.Field));
     
-    // IMPORTANT: Select specific columns needed for headline ticker
+    // IMPORTANT: Select ALL columns including latitude and longitude for nearest store functionality
     const [rows] = await db.execute(
       `SELECT 
         id, 
@@ -22,7 +22,10 @@ router.get("/", async (req, res) => {
         Branch as branch_name,
         City as city,
         Address as address,
-        \`Phone Number\` as phone
+        \`Phone Number\` as phone,
+        latitude,
+        longitude,
+        created_at
       FROM stores_branches 
       ORDER BY id DESC`
     );
@@ -30,7 +33,12 @@ router.get("/", async (req, res) => {
     console.log(`✅ Fetched ${rows.length} stores from database`);
     
     if (rows.length > 0) {
-      console.log("Sample store data:", rows[0]);
+      console.log("Sample store data with coordinates:", {
+        id: rows[0].id,
+        store_name: rows[0].store_name,
+        latitude: rows[0].latitude,
+        longitude: rows[0].longitude
+      });
     } else {
       console.log("⚠️ No stores found in database");
     }
@@ -61,8 +69,8 @@ router.get("/:id", async (req, res) => {
         City as city,
         Address as address,
         \`Phone Number\` as phone,
-        Latitude as latitude,
-        Longitude as longitude
+        latitude,
+        longitude
       FROM stores_branches 
       WHERE id = ?`,
       [id]
@@ -107,7 +115,7 @@ router.post("/", async (req, res) => {
 
     const [result] = await db.execute(
       `INSERT INTO stores_branches 
-      (\`Store Name\`, City, Branch, Address, \`Phone Number\`, Latitude, Longitude, store_image) 
+      (\`Store Name\`, City, Branch, Address, \`Phone Number\`, latitude, longitude, store_image) 
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         store_name, 
@@ -130,7 +138,9 @@ router.post("/", async (req, res) => {
         Branch as branch_name,
         City as city,
         Address as address,
-        \`Phone Number\` as phone
+        \`Phone Number\` as phone,
+        latitude,
+        longitude
       FROM stores_branches 
       WHERE id = ?`,
       [result.insertId]
@@ -189,15 +199,15 @@ router.put("/:id", async (req, res) => {
       return res.status(404).json({ success: false, message: "Store not found" });
     }
 
-    // Update all fields including image
+    // Update all fields including image and coordinates
     const query = `UPDATE stores_branches 
        SET \`Store Name\` = ?, 
            City = ?, 
            Branch = ?, 
            Address = ?, 
            \`Phone Number\` = ?, 
-           Latitude = ?, 
-           Longitude = ?,
+           latitude = ?, 
+           longitude = ?,
            store_image = ?
        WHERE id = ?`;
       
@@ -224,7 +234,9 @@ router.put("/:id", async (req, res) => {
         Branch as branch_name,
         City as city,
         Address as address,
-        \`Phone Number\` as phone
+        \`Phone Number\` as phone,
+        latitude,
+        longitude
       FROM stores_branches 
       WHERE id = ?`,
       [id]
