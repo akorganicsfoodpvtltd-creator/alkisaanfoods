@@ -17,7 +17,7 @@ export default function BlogRecipesSection() {
   ];
 
   return (
-    <section id="recipes" className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-gray-50 to-white">
+    <section id="recipes" className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-white via-white to-white">
       <div className="max-w-7xl mx-auto">
         
         {/* Section Header */}
