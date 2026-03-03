@@ -9,7 +9,8 @@ import {
   FaMapMarkerAlt, FaPhone, FaExternalLinkAlt,
   FaArrowUp, FaArrowDown, FaSpinner, FaTimes,
   FaRupeeSign, FaWarehouse, FaUsers, FaUpload,
-  FaCoins, FaImage, FaLink, FaCloudUploadAlt
+  FaCoins, FaImage, FaLink, FaCloudUploadAlt,
+  FaCreditCard, FaMoneyBillWave, FaUser, FaEnvelope, FaHome
 } from "react-icons/fa";
 
 // API Service - Fixed endpoints
@@ -157,13 +158,12 @@ const api = {
   },
   
   addProduct: async (productData) => {
-    // Make sure image is included in the data
     const payload = {
       name: productData.name,
       category: productData.category,
       price: productData.price,
       description: productData.description || '',
-      image: productData.image || null // This is crucial - include image field
+      image: productData.image || null
     };
     
     console.log('Sending add product payload:', payload);
@@ -182,13 +182,12 @@ const api = {
   },
   
   updateProduct: async (id, productData) => {
-    // Make sure image is included in the data
     const payload = {
       name: productData.name,
       category: productData.category,
       price: productData.price,
       description: productData.description || '',
-      image: productData.image || null // This is crucial - include image field
+      image: productData.image || null
     };
     
     console.log('Sending update product payload:', payload);
@@ -229,16 +228,15 @@ const api = {
   },
   
   addStore: async (storeData) => {
-    // Format the image before sending - include store_image field
     const payload = {
       store_name: storeData.storeName,
       city: storeData.city,
       branch_name: storeData.branch || 'Main',
       address: storeData.address,
       phone: storeData.phone,
-      latitude: storeData.latitude || null,
-      longitude: storeData.longitude || null,
-      store_image: storeData.storeImage || null // This is crucial - include image field
+      latitude: storeData.latitude,
+      longitude: storeData.longitude,
+      store_image: storeData.storeImage || null
     };
     
     console.log('Sending add store payload:', payload);
@@ -257,16 +255,15 @@ const api = {
   },
   
   updateStore: async (id, storeData) => {
-    // Format the image before sending - include store_image field
     const payload = {
       store_name: storeData.storeName,
       city: storeData.city,
       branch_name: storeData.branch || 'Main',
       address: storeData.address,
       phone: storeData.phone,
-      latitude: storeData.latitude || null,
-      longitude: storeData.longitude || null,
-      store_image: storeData.storeImage || null // This is crucial - include image field
+      latitude: storeData.latitude,
+      longitude: storeData.longitude,
+      store_image: storeData.storeImage || null
     };
     
     console.log('Sending update store payload:', payload);
@@ -321,27 +318,111 @@ const api = {
   
   exportOrders: async () => {
     try {
-      const response = await fetch(`${API_BASE}/api/orders/export/excel`);
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Export failed');
+      // First fetch all orders with full details
+      const ordersResponse = await fetch(`${API_BASE}/api/orders`);
+      if (!ordersResponse.ok) {
+        throw new Error('Failed to fetch orders for export');
       }
+      const ordersData = await ordersResponse.json();
+      const orders = ordersData.orders || [];
       
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'orders_export.xlsx';
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      // Format orders for Excel export with all details
+      const formattedOrders = orders.map(order => {
+        // Parse shipping_info
+        let shippingInfo = {};
+        if (order.shipping_info) {
+          if (typeof order.shipping_info === 'string') {
+            try {
+              shippingInfo = JSON.parse(order.shipping_info);
+            } catch (e) {
+              shippingInfo = {};
+            }
+          } else {
+            shippingInfo = order.shipping_info;
+          }
+        }
+
+        // Parse items
+        let items = [];
+        if (order.items) {
+          if (typeof order.items === 'string') {
+            try {
+              items = JSON.parse(order.items);
+            } catch (e) {
+              items = [];
+            }
+          } else if (Array.isArray(order.items)) {
+            items = order.items;
+          }
+        }
+
+        // Format items as string for Excel
+        const itemsString = items.map(item => 
+          `${item.name || 'Product'} (x${item.quantity || 1}) - ${formatPricePKR(item.price || 0)}`
+        ).join('; ');
+
+        // Format shipping info as string for Excel
+        const shippingString = `${shippingInfo.firstName || shippingInfo.first_name || ''} ${shippingInfo.lastName || shippingInfo.last_name || ''}, ${shippingInfo.email || ''}, ${shippingInfo.phone || ''}, ${shippingInfo.address || ''}`;
+
+        return {
+          'Order ID': order.order_id || `ORD-${order.id}`,
+          'Customer Name': `${shippingInfo.firstName || shippingInfo.first_name || ''} ${shippingInfo.lastName || shippingInfo.last_name || ''}`.trim() || 'N/A',
+          'Email': shippingInfo.email || 'N/A',
+          'Phone': shippingInfo.phone || 'N/A',
+          'Address': shippingInfo.address || 'N/A',
+          'Items': itemsString || 'No items',
+          'Total Amount': formatPricePKR(order.total_amount),
+          'Payment Method': order.payment_method === 'cod' ? 'Cash on Delivery' : (order.payment_method || 'N/A'),
+          'Status': order.status || 'pending',
+          'Order Date': order.created_at ? new Date(order.created_at).toLocaleString('en-PK') : 'N/A',
+          'Last Updated': order.updated_at ? new Date(order.updated_at).toLocaleString('en-PK') : 'N/A',
+          'Notes': order.notes || ''
+        };
+      });
+
+      // Send formatted data to backend or generate CSV directly
+      // For now, let's create a CSV file directly in frontend
+      const csvContent = convertToCSV(formattedOrders);
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `orders_export_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
       return true;
     } catch (error) {
       console.error('Export error:', error);
       throw new Error('Export failed: ' + error.message);
     }
   }
+};
+
+// Helper function to convert array to CSV
+const convertToCSV = (data) => {
+  if (data.length === 0) return '';
+  
+  const headers = Object.keys(data[0]);
+  const csvRows = [];
+  
+  // Add headers
+  csvRows.push(headers.join(','));
+  
+  // Add rows
+  for (const row of data) {
+    const values = headers.map(header => {
+      const value = row[header] || '';
+      // Escape quotes and wrap in quotes if contains comma or newline
+      const escaped = value.toString().replace(/"/g, '""');
+      return `"${escaped}"`;
+    });
+    csvRows.push(values.join(','));
+  }
+  
+  return csvRows.join('\n');
 };
 
 // Helper function to format price in Pakistani Rupees
@@ -364,25 +445,33 @@ const formatPricePKR = (price) => {
   })}`;
 };
 
-// Helper function to extract numeric price - FIXED to handle 0 and negative values properly
+// Helper function to extract numeric price
 const extractNumericPrice = (price) => {
   if (price === null || price === undefined || price === '') return 0;
   
-  // If it's already a number, return it (ensuring non-negative)
   if (typeof price === 'number') {
     return price < 0 ? 0 : price;
   }
   
-  // If it's a string, clean it and parse
   if (typeof price === 'string') {
-    // Remove 'Rs.', 'Rs', commas and trim
     const cleaned = price.replace('Rs.', '').replace('Rs', '').replace(/,/g, '').trim();
     const parsed = parseFloat(cleaned);
-    // Return 0 if NaN or negative, otherwise return the parsed value
     return (isNaN(parsed) || parsed < 0) ? 0 : parsed;
   }
   
   return 0;
+};
+
+// Helper function to safely parse JSON
+const safeJsonParse = (data, defaultValue = {}) => {
+  if (!data) return defaultValue;
+  if (typeof data === 'object') return data;
+  try {
+    return JSON.parse(data);
+  } catch (e) {
+    console.error('Error parsing JSON:', e);
+    return defaultValue;
+  }
 };
 
 // StatCard Component
@@ -451,6 +540,167 @@ const StatusBadge = ({ status }) => {
       <Icon className="w-3 h-3 mr-1.5" />
       {status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Unknown'}
     </span>
+  );
+};
+
+// Payment Method Badge
+const PaymentMethodBadge = ({ method }) => {
+  const config = {
+    cod: { 
+      color: 'bg-emerald-100 text-emerald-800 border border-emerald-200',
+      icon: FaMoneyBillWave,
+      label: 'Cash on Delivery'
+    },
+    card: { 
+      color: 'bg-blue-100 text-blue-800 border border-blue-200',
+      icon: FaCreditCard,
+      label: 'Credit Card'
+    },
+    credit_card: { 
+      color: 'bg-blue-100 text-blue-800 border border-blue-200',
+      icon: FaCreditCard,
+      label: 'Credit Card'
+    }
+  };
+
+  const normalizedMethod = method?.toLowerCase() || 'cod';
+  const { color, icon: Icon, label } = config[normalizedMethod] || { 
+    color: 'bg-gray-100 text-gray-800 border border-gray-200',
+    icon: FaCreditCard,
+    label: method || 'Unknown'
+  };
+
+  return (
+    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${color}`}>
+      <Icon className="w-3 h-3 mr-1" />
+      {label}
+    </span>
+  );
+};
+
+// Order Details Modal
+const OrderDetailsModal = ({ isOpen, onClose, order }) => {
+  if (!isOpen || !order) return null;
+
+  const shippingInfo = safeJsonParse(order.shipping_info, {});
+  const items = safeJsonParse(order.items, []);
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title={`Order Details - ${order.order_id}`} size="lg">
+      <div className="space-y-6">
+        {/* Order Status */}
+        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+          <div>
+            <p className="text-sm text-gray-600 mb-1">Order Status</p>
+            <StatusBadge status={order.status} />
+          </div>
+          <div>
+            <p className="text-sm text-gray-600 mb-1">Payment Method</p>
+            <PaymentMethodBadge method={order.payment_method} />
+          </div>
+        </div>
+
+        {/* Customer Information */}
+        <div>
+          <h4 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+            <FaUser className="w-4 h-4 mr-2 text-blue-600" />
+            Customer Information
+          </h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
+            <div>
+              <p className="text-sm text-gray-600">Name</p>
+              <p className="font-medium">
+                {shippingInfo.firstName || shippingInfo.first_name} {shippingInfo.lastName || shippingInfo.last_name}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">Email</p>
+              <p className="font-medium">{shippingInfo.email || 'N/A'}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">Phone</p>
+              <p className="font-medium">{shippingInfo.phone || 'N/A'}</p>
+            </div>
+            <div className="md:col-span-2">
+              <p className="text-sm text-gray-600">Shipping Address</p>
+              <p className="font-medium">{shippingInfo.address || 'N/A'}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Order Items */}
+        <div>
+          <h4 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+            <FaBox className="w-4 h-4 mr-2 text-blue-600" />
+            Order Items
+          </h4>
+          <div className="bg-gray-50 rounded-lg overflow-hidden">
+            <table className="w-full">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-700">Product</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-700">Quantity</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-700">Price</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-700">Total</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {items.length > 0 ? (
+                  items.map((item, index) => (
+                    <tr key={index}>
+                      <td className="px-4 py-2 text-sm">{item.name || 'Product'}</td>
+                      <td className="px-4 py-2 text-sm">{item.quantity || 1}</td>
+                      <td className="px-4 py-2 text-sm">{formatPricePKR(item.price || 0)}</td>
+                      <td className="px-4 py-2 text-sm font-medium">
+                        {formatPricePKR((item.price || 0) * (item.quantity || 1))}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="4" className="px-4 py-4 text-center text-sm text-gray-500">
+                      No items found
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+              <tfoot className="bg-gray-100">
+                <tr>
+                  <td colSpan="3" className="px-4 py-2 text-right font-medium">Total:</td>
+                  <td className="px-4 py-2 font-bold text-blue-600">{order.total_amount}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+
+        {/* Order Timeline */}
+        <div>
+          <h4 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+            <FaClock className="w-4 h-4 mr-2 text-blue-600" />
+            Order Timeline
+          </h4>
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600">Order Created:</span>
+                <span className="text-sm font-medium">
+                  {order.created_at ? new Date(order.created_at).toLocaleString('en-PK') : 'N/A'}
+                </span>
+              </div>
+              {order.updated_at && order.updated_at !== order.created_at && (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">Last Updated:</span>
+                  <span className="text-sm font-medium">
+                    {new Date(order.updated_at).toLocaleString('en-PK')}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </Modal>
   );
 };
 
@@ -661,19 +911,17 @@ const ImageUploadSection = ({
   );
 };
 
-// ==================== FIXED: Add Store Form Component ====================
+// Add Store Form Component with Required Latitude/Longitude
 const AddStoreForm = ({ isOpen, onClose, editingStore, storeForm, setStoreForm, handleSubmit }) => {
   const [loading, setLoading] = useState(false);
   const [imageFile, setImageFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState("");
   const [uploadMode, setUploadMode] = useState('upload');
 
-  // FIXED: Load ALL store data when editing
   useEffect(() => {
     if (editingStore) {
       console.log("Loading store data for edit:", editingStore);
       
-      // Set ALL form fields from editingStore
       setStoreForm({
         storeName: editingStore['Store Name'] || editingStore.store_name || '',
         city: editingStore.City || editingStore.city || '',
@@ -685,7 +933,6 @@ const AddStoreForm = ({ isOpen, onClose, editingStore, storeForm, setStoreForm, 
         storeImage: editingStore['Store Image'] || editingStore.store_image || ''
       });
       
-      // Set image preview if exists
       const imageUrl = editingStore['Store Image'] || editingStore.store_image;
       if (imageUrl) {
         if (imageUrl.startsWith('http') || imageUrl.startsWith('//') || imageUrl.includes('/')) {
@@ -735,7 +982,6 @@ const AddStoreForm = ({ isOpen, onClose, editingStore, storeForm, setStoreForm, 
     try {
       let finalImageUrl = storeForm.storeImage;
       
-      // Upload to Cloudinary if file is selected
       if (imageFile) {
         try {
           console.log('Uploading image to Cloudinary...');
@@ -749,15 +995,15 @@ const AddStoreForm = ({ isOpen, onClose, editingStore, storeForm, setStoreForm, 
         }
       }
       
-      // Prepare store data with ALL fields
       const storeData = {
         storeName: storeForm.storeName,
         city: storeForm.city,
         branch: storeForm.branch || 'Main',
         address: storeForm.address,
         phone: storeForm.phone,
-        latitude: storeForm.latitude || null,
-        longitude: storeForm.longitude || null,
+        // Latitude and Longitude are required - send as is
+        latitude: storeForm.latitude,
+        longitude: storeForm.longitude,
         storeImage: finalImageUrl || null
       };
       
@@ -878,29 +1124,31 @@ const AddStoreForm = ({ isOpen, onClose, editingStore, storeForm, setStoreForm, 
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Latitude
+                Latitude *
               </label>
               <input
                 type="number"
                 step="any"
+                required
                 value={storeForm.latitude}
                 onChange={(e) => setStoreForm({...storeForm, latitude: e.target.value})}
                 className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
-                placeholder="e.g., 24.8607 (optional)"
+                placeholder="e.g., 24.8607"
               />
             </div>
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Longitude
+                Longitude *
               </label>
               <input
                 type="number"
                 step="any"
+                required
                 value={storeForm.longitude}
                 onChange={(e) => setStoreForm({...storeForm, longitude: e.target.value})}
                 className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
-                placeholder="e.g., 67.0011 (optional)"
+                placeholder="e.g., 67.0011"
               />
             </div>
           </div>
@@ -984,7 +1232,6 @@ const AddProductForm = ({ isOpen, onClose, editingProduct, productForm, setProdu
     try {
       let finalImageUrl = productForm.image;
       
-      // Upload to Cloudinary if file is selected
       if (imageFile) {
         try {
           console.log('Uploading product image to Cloudinary...');
@@ -998,13 +1245,12 @@ const AddProductForm = ({ isOpen, onClose, editingProduct, productForm, setProdu
         }
       }
       
-      // Prepare product data with the image URL
       const productData = {
         name: productForm.name,
         category: productForm.category,
-        price: parseFloat(productForm.price) || 0, // FIXED: Ensure price is a number, default to 0 if NaN
+        price: parseFloat(productForm.price) || 0,
         description: productForm.description || '',
-        image: finalImageUrl || null // This will be saved to database
+        image: finalImageUrl || null
       };
       
       console.log('Submitting product data:', productData);
@@ -1081,7 +1327,7 @@ const AddProductForm = ({ isOpen, onClose, editingProduct, productForm, setProdu
                 <input
                   type="number"
                   required
-                  min="0" // FIXED: Add min attribute to prevent negative prices
+                  min="0"
                   step="any"
                   value={productForm.price}
                   onChange={(e) => setProductForm({...productForm, price: e.target.value})}
@@ -1150,6 +1396,33 @@ const AddProductForm = ({ isOpen, onClose, editingProduct, productForm, setProdu
   );
 };
 
+// Order Items Row Component
+const OrderItemsRow = ({ items }) => {
+  const parsedItems = safeJsonParse(items, []);
+  
+  if (parsedItems.length === 0) {
+    return <span className="text-gray-400 text-sm">No items</span>;
+  }
+
+  return (
+    <div className="space-y-1 max-w-xs">
+      {parsedItems.slice(0, 2).map((item, index) => (
+        <div key={index} className="text-sm flex justify-between items-center">
+          <span className="truncate max-w-[150px]">{item.name || 'Product'}</span>
+          <span className="text-gray-600 ml-2 whitespace-nowrap">
+            x{item.quantity || 1}
+          </span>
+        </div>
+      ))}
+      {parsedItems.length > 2 && (
+        <div className="text-xs text-gray-500 mt-1">
+          +{parsedItems.length - 2} more items
+        </div>
+      )}
+    </div>
+  );
+};
+
 // Main Admin Dashboard Component
 export default function AdminDashboard() {
   const [products, setProducts] = useState([]);
@@ -1163,6 +1436,8 @@ export default function AdminDashboard() {
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [editingStore, setEditingStore] = useState(null);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [showOrderDetails, setShowOrderDetails] = useState(false);
   const [stats, setStats] = useState({
     totalRevenue: 0,
     totalOrders: 0,
@@ -1225,7 +1500,7 @@ export default function AdminDashboard() {
           category: product.category,
           price: formatPricePKR(product.price),
           originalPrice: product.price,
-          image: product.image, // Keep the raw value from database
+          image: product.image,
           displayImage: getDisplayImageUrl(product.image, '/images/placeholder-product.jpg'),
           description: product.description || ''
         }));
@@ -1268,7 +1543,7 @@ export default function AdminDashboard() {
         });
       }
 
-      // FIXED: Handle stores data - map ALL fields correctly
+      // Handle stores data
       if (storesData.status === 'fulfilled') {
         const storesValue = storesData.value;
         console.log('Stores raw data:', storesValue);
@@ -1292,51 +1567,60 @@ export default function AdminDashboard() {
         console.error('Failed to fetch stores:', storesData.reason);
       }
 
-      // Handle orders data
+      // Handle orders data with proper parsing
       if (ordersData.status === 'fulfilled') {
         const ordersValue = ordersData.value;
-        console.log('Orders response:', ordersValue);
+        console.log('Orders raw data:', ordersValue);
         
         const formattedOrders = ordersValue.map(order => {
+          // Parse shipping_info if it's a string
           let shippingInfo = {};
-          let items = [];
-          
-          try {
+          if (order.shipping_info) {
             if (typeof order.shipping_info === 'string') {
-              shippingInfo = JSON.parse(order.shipping_info);
-            } else if (order.shipping_info) {
+              try {
+                shippingInfo = JSON.parse(order.shipping_info);
+              } catch (e) {
+                console.error('Error parsing shipping_info:', e);
+                shippingInfo = {};
+              }
+            } else {
               shippingInfo = order.shipping_info;
             }
+          }
 
+          // Parse items if it's a string
+          let items = [];
+          if (order.items) {
             if (typeof order.items === 'string') {
-              items = JSON.parse(order.items);
+              try {
+                items = JSON.parse(order.items);
+              } catch (e) {
+                console.error('Error parsing items:', e);
+                items = [];
+              }
             } else if (Array.isArray(order.items)) {
               items = order.items;
             }
-          } catch (e) {
-            console.error('Error parsing JSON:', e);
           }
-          
+
           return {
             id: order.id,
             order_id: order.order_id || `ORD-${order.id}`,
             items: items,
+            items_raw: order.items, // Keep raw for display
             total_amount: formatPricePKR(order.total_amount),
-            shipping_info: {
-              firstName: shippingInfo.firstName || shippingInfo.first_name || 'Customer',
-              lastName: shippingInfo.lastName || shippingInfo.last_name || '',
-              email: shippingInfo.email || '',
-              address: shippingInfo.address || '',
-              phone: shippingInfo.phone || ''
-            },
+            shipping_info: shippingInfo,
             status: order.status || 'pending',
-            payment_method: order.payment_method || 'Credit Card',
-            created_at: order.created_at || new Date().toISOString()
+            payment_method: order.payment_method || 'cod',
+            created_at: order.created_at || new Date().toISOString(),
+            updated_at: order.updated_at,
+            notes: order.notes
           };
         });
         
         setOrders(formattedOrders);
         console.log(`Loaded ${formattedOrders.length} orders`);
+        console.log('First order sample:', formattedOrders[0]);
       } else {
         console.error('Failed to fetch orders:', ordersData.reason);
       }
@@ -1404,9 +1688,9 @@ export default function AdminDashboard() {
     setProductForm({
       name: product.name,
       category: product.category,
-      price: extractNumericPrice(product.price), // FIXED: Now returns 0 for invalid/negative values
+      price: extractNumericPrice(product.price),
       description: product.description || "",
-      image: product.image // Use the raw image value
+      image: product.image
     });
     setShowAddProduct(true);
   };
@@ -1424,11 +1708,9 @@ export default function AdminDashboard() {
     }
   };
 
-  // FIXED: Edit store handler - passes ALL store data
   const handleEditStore = (store) => {
     console.log('Editing store:', store);
     setEditingStore(store);
-    // Form will be populated by useEffect in AddStoreForm
     setShowAddStore(true);
   };
 
@@ -1463,6 +1745,11 @@ export default function AdminDashboard() {
     } catch (error) {
       alert("Error exporting orders: " + error.message);
     }
+  };
+
+  const handleViewOrderDetails = (order) => {
+    setSelectedOrder(order);
+    setShowOrderDetails(true);
   };
 
   // Filter orders by status
@@ -1665,7 +1952,9 @@ export default function AdminDashboard() {
                       <tr>
                         <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Order ID</th>
                         <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Customer</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Items</th>
                         <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Amount</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Payment</th>
                         <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Status</th>
                         <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Date</th>
                         <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Actions</th>
@@ -1673,57 +1962,79 @@ export default function AdminDashboard() {
                     </thead>
                     <tbody className="divide-y divide-gray-200">
                       {filteredOrders.length > 0 ? (
-                        filteredOrders.map((order) => (
-                          <tr key={order.id} className="hover:bg-blue-50/50 transition-colors">
-                            <td className="px-6 py-4">
-                              <span className="font-bold text-blue-600">{order.order_id}</span>
-                            </td>
-                            <td className="px-6 py-4">
-                              <div>
-                                <div className="font-medium text-gray-900">
-                                  {order.shipping_info?.firstName} {order.shipping_info?.lastName}
+                        filteredOrders.map((order) => {
+                          const shippingInfo = order.shipping_info || {};
+                          const customerName = `${shippingInfo.firstName || shippingInfo.first_name || ''} ${shippingInfo.lastName || shippingInfo.last_name || ''}`.trim() || 'N/A';
+                          
+                          return (
+                            <tr key={order.id} className="hover:bg-blue-50/50 transition-colors">
+                              <td className="px-6 py-4">
+                                <span className="font-bold text-blue-600">{order.order_id}</span>
+                              </td>
+                              <td className="px-6 py-4">
+                                <div>
+                                  <div className="font-medium text-gray-900 flex items-center">
+                                    <FaUser className="w-3 h-3 mr-1 text-gray-400" />
+                                    {customerName}
+                                  </div>
+                                  <div className="text-sm text-gray-600 flex items-center mt-1">
+                                    <FaEnvelope className="w-3 h-3 mr-1 text-gray-400" />
+                                    {shippingInfo.email || 'N/A'}
+                                  </div>
+                                  <div className="text-sm text-gray-600 flex items-center mt-1">
+                                    <FaPhone className="w-3 h-3 mr-1 text-gray-400" />
+                                    {shippingInfo.phone || 'N/A'}
+                                  </div>
                                 </div>
-                                <div className="text-sm text-gray-600">{order.shipping_info?.email}</div>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="font-bold text-gray-900">{order.total_amount}</div>
-                              <div className="text-sm text-gray-600">{order.payment_method}</div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <StatusBadge status={order.status} />
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="text-sm text-gray-900">
-                                {order.created_at ? new Date(order.created_at).toLocaleDateString('en-PK') : 'N/A'}
-                              </div>
-                              <div className="text-xs text-gray-500">
-                                {order.created_at ? new Date(order.created_at).toLocaleTimeString('en-PK', { hour: '2-digit', minute: '2-digit' }) : ''}
-                              </div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="flex items-center gap-2">
-                                <select
-                                  value={order.status || 'pending'}
-                                  onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value)}
-                                  className="text-sm border-2 border-gray-200 rounded-lg px-3 py-1.5 focus:border-blue-500 outline-none transition"
-                                >
-                                  <option value="pending">Pending</option>
-                                  <option value="processing">Processing</option>
-                                  <option value="shipped">Shipped</option>
-                                  <option value="delivered">Delivered</option>
-                                  <option value="cancelled">Cancelled</option>
-                                </select>
-                                <button className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
-                                  <FaEye />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))
+                              </td>
+                              <td className="px-6 py-4">
+                                <OrderItemsRow items={order.items_raw} />
+                              </td>
+                              <td className="px-6 py-4">
+                                <div className="font-bold text-gray-900">{order.total_amount}</div>
+                              </td>
+                              <td className="px-6 py-4">
+                                <PaymentMethodBadge method={order.payment_method} />
+                              </td>
+                              <td className="px-6 py-4">
+                                <StatusBadge status={order.status} />
+                              </td>
+                              <td className="px-6 py-4">
+                                <div className="text-sm text-gray-900">
+                                  {order.created_at ? new Date(order.created_at).toLocaleDateString('en-PK') : 'N/A'}
+                                </div>
+                                <div className="text-xs text-gray-500">
+                                  {order.created_at ? new Date(order.created_at).toLocaleTimeString('en-PK', { hour: '2-digit', minute: '2-digit' }) : ''}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4">
+                                <div className="flex items-center gap-2">
+                                  <select
+                                    value={order.status || 'pending'}
+                                    onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value)}
+                                    className="text-sm border-2 border-gray-200 rounded-lg px-3 py-1.5 focus:border-blue-500 outline-none transition"
+                                  >
+                                    <option value="pending">Pending</option>
+                                    <option value="processing">Processing</option>
+                                    <option value="shipped">Shipped</option>
+                                    <option value="delivered">Delivered</option>
+                                    <option value="cancelled">Cancelled</option>
+                                  </select>
+                                  <button 
+                                    onClick={() => handleViewOrderDetails(order)}
+                                    className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                    title="View Details"
+                                  >
+                                    <FaEye />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })
                       ) : (
                         <tr>
-                          <td colSpan="6" className="px-6 py-8 text-center text-gray-500">
+                          <td colSpan="8" className="px-6 py-8 text-center text-gray-500">
                             No orders found
                           </td>
                         </tr>
@@ -1748,7 +2059,6 @@ export default function AdminDashboard() {
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {filteredProducts.map((product) => {
                       const displayImage = getDisplayImageUrl(product.image, '/images/placeholder-product.jpg');
-                      console.log('Product:', product.name, 'Raw image:', product.image, 'Display image:', displayImage);
                       
                       return (
                         <div key={product.id} className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
@@ -1759,7 +2069,7 @@ export default function AdminDashboard() {
                                 alt={product.name}
                                 className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                                 onError={(e) => {
-                                  console.error('Error loading product image:', product.image, 'Display URL:', displayImage);
+                                  console.error('Error loading product image:', product.image);
                                   e.target.onerror = null;
                                   e.target.src = '/images/placeholder-product.jpg';
                                 }}
@@ -1829,7 +2139,7 @@ export default function AdminDashboard() {
               </div>
             )}
 
-            {/* Stores Tab - FIXED: Now shows all store data */}
+            {/* Stores Tab */}
             {activeTab === 'stores' && (
               <div>
                 <div className="flex items-center justify-between mb-6">
@@ -1843,7 +2153,6 @@ export default function AdminDashboard() {
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredStores.map((store, index) => {
                       const displayImage = getDisplayImageUrl(store['Store Image'], '/images/placeholder-store.jpg');
-                      console.log('Store:', store['Store Name'], 'Raw image:', store['Store Image'], 'Display image:', displayImage);
                       
                       return (
                         <div key={store.id || index} className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
@@ -1854,7 +2163,7 @@ export default function AdminDashboard() {
                                 alt={store['Store Name']}
                                 className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                                 onError={(e) => {
-                                  console.error('Error loading store image:', store['Store Image'], 'Display URL:', displayImage);
+                                  console.error('Error loading store image:', store['Store Image']);
                                   e.target.onerror = null;
                                   e.target.src = '/images/placeholder-store.jpg';
                                 }}
@@ -1906,16 +2215,10 @@ export default function AdminDashboard() {
                               </div>
                               
                               <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
+                                <FaHome className="w-4 h-4 inline mr-2 text-gray-400" />
                                 {store.Address}
                               </div>
                             </div>
-                            
-                            {/* Debug info - remove in production */}
-                            {process.env.NODE_ENV === 'development' && (
-                              <div className="mt-2 text-xs text-gray-400">
-                               
-                              </div>
-                            )}
                           </div>
                         </div>
                       );
@@ -1960,20 +2263,26 @@ export default function AdminDashboard() {
                     </div>
                     <div className="space-y-4">
                       {orders.slice(0, 5).length > 0 ? (
-                        orders.slice(0, 5).map((order) => (
-                          <div key={order.id} className="flex items-center justify-between p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors">
-                            <div>
-                              <div className="font-medium text-gray-900">{order.order_id}</div>
-                              <div className="text-sm text-gray-600">
-                                {order.shipping_info?.firstName} {order.shipping_info?.lastName}
+                        orders.slice(0, 5).map((order) => {
+                          const shippingInfo = order.shipping_info || {};
+                          const customerName = `${shippingInfo.firstName || shippingInfo.first_name || ''} ${shippingInfo.lastName || shippingInfo.last_name || ''}`.trim() || 'N/A';
+                          
+                          return (
+                            <div key={order.id} className="flex items-center justify-between p-3 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors">
+                              <div>
+                                <div className="font-medium text-gray-900">{order.order_id}</div>
+                                <div className="text-sm text-gray-600 flex items-center mt-1">
+                                  <FaUser className="w-3 h-3 mr-1 text-gray-400" />
+                                  {customerName}
+                                </div>
+                              </div>
+                              <div className="flex items-center space-x-4">
+                                <StatusBadge status={order.status} />
+                                <span className="font-medium text-gray-900">{order.total_amount}</span>
                               </div>
                             </div>
-                            <div className="flex items-center space-x-4">
-                              <StatusBadge status={order.status} />
-                              <span className="font-medium text-gray-900">{order.total_amount}</span>
-                            </div>
-                          </div>
-                        ))
+                          );
+                        })
                       ) : (
                         <div className="text-center py-8 text-gray-500">
                           No recent orders
@@ -2069,6 +2378,16 @@ export default function AdminDashboard() {
         productForm={productForm}
         setProductForm={setProductForm}
         handleSubmit={handleAddProduct}
+      />
+
+      {/* Order Details Modal */}
+      <OrderDetailsModal
+        isOpen={showOrderDetails}
+        onClose={() => {
+          setShowOrderDetails(false);
+          setSelectedOrder(null);
+        }}
+        order={selectedOrder}
       />
     </div>
   );
