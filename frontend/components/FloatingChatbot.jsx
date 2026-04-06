@@ -280,7 +280,7 @@ export default function FloatingChatbot() {
                     <IoChatbubbleEllipses className={isMobile ? 'text-lg' : 'text-xl'} />
                   </div>
                   <div>
-                    <h3 className={`font-semibold ${isMobile ? 'text-base' : 'text-lg'}`}>Al Kissan Assistant</h3>
+                    <h3 className={`font-semibold ${isMobile ? 'text-base' : 'text-lg'}`}>Al Kissan  Foods Assistant</h3>
                     <p className={`text-green-100 flex items-center gap-1 ${isMobile ? 'text-[10px]' : 'text-xs'}`}>
                       <span className="w-1.5 h-1.5 md:w-2 md:h-2 bg-green-300 rounded-full animate-pulse"></span>
                       Online
