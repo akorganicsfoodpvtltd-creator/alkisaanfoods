@@ -41,7 +41,7 @@ export default function HeadlineTicker() {
         console.log("📡 Fetching stores from backend...");
         
         // ✅ Backend API call
-        const res = await fetch('http://localhost:5000/api/stores');
+       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/stores`);
         
         if (!res.ok) {
           throw new Error(`HTTP error! status: ${res.status}`);
