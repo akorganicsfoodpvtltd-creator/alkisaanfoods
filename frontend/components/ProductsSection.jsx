@@ -31,7 +31,8 @@ export default function ProductsSection() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/products");
+     // ✅ Baad mein
+const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`);
         const data = await res.json();
         let productsList = data.products || [];
         
@@ -56,7 +57,7 @@ export default function ProductsSection() {
   useEffect(() => {
     const fetchCart = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/cart", { credentials: 'include' });
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart`, { credentials: 'include' });
         const data = await res.json();
         if (data.success) setCartItems(data.items || []);
       } catch (err) {
@@ -87,7 +88,7 @@ export default function ProductsSection() {
   const addToCart = async (product) => {
     setAddingToCart(product.id);
     try {
-      const res = await fetch("http://localhost:5000/api/cart", {
+     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -140,7 +141,7 @@ export default function ProductsSection() {
     setBuyingNow(product.id);
     try {
       // First add to cart
-      const res = await fetch("http://localhost:5000/api/cart", {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart`,{
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
