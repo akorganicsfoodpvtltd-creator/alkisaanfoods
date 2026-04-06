@@ -31,8 +31,7 @@ export default function ProductsSection() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-     // ✅ Baad mein
-const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`);
+     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`); 
         const data = await res.json();
         let productsList = data.products || [];
         
@@ -57,7 +56,7 @@ const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`);
   useEffect(() => {
     const fetchCart = async () => {
       try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart`, { credentials: 'include' });
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart`, { credentials: 'include' });
         const data = await res.json();
         if (data.success) setCartItems(data.items || []);
       } catch (err) {
@@ -88,7 +87,7 @@ const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`);
   const addToCart = async (product) => {
     setAddingToCart(product.id);
     try {
-     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -141,7 +140,7 @@ const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`);
     setBuyingNow(product.id);
     try {
       // First add to cart
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart`,{
+     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
