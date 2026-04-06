@@ -42,11 +42,11 @@ const upload = multer({
 router.get("/", async (req, res) => {
   try {
     // Check what columns exist in your Products table
-    const [columns] = await pool.query("SHOW COLUMNS FROM Products");
+    const [columns] = await pool.query("SHOW COLUMNS FROM products");
     console.log("Product table columns:", columns.map(col => col.Field));
     
     // Fetch products - adjust columns based on your actual table structure
-    const [products] = await pool.query("SELECT * FROM Products ORDER BY id DESC");
+    const [products] = await pool.query("SELECT * FROM products ORDER BY id DESC");
     
     res.json({ success: true, products: products });
   } catch (err) {
@@ -59,7 +59,7 @@ router.get("/", async (req, res) => {
 router.get("/:id", async (req, res) => {
   const { id } = req.params;
   try {
-    const [rows] = await pool.query("SELECT * FROM Products WHERE id = ?", [id]);
+    const [rows] = await pool.query("SELECT * FROM products WHERE id = ?", [id]);
     if (rows.length === 0) {
       return res.status(404).json({ success: false, message: "Product not found" });
     }
@@ -86,12 +86,12 @@ router.post("/", async (req, res) => {
     }
 
     // Check what columns exist in your Products table
-    const [columns] = await pool.query("SHOW COLUMNS FROM Products");
+    const [columns] = await pool.query("SHOW COLUMNS FROM products");
     const columnNames = columns.map(col => col.Field);
     console.log("Available columns:", columnNames);
     
     // Build dynamic query based on available columns
-    let query = "INSERT INTO Products (name, category, price";
+    let query = "INSERT INTO products (name, category, price";
     let values = [name, category, parseFloat(price)];
     let placeholders = "?, ?, ?";
     
@@ -115,7 +115,7 @@ router.post("/", async (req, res) => {
     const [result] = await pool.query(query, values);
 
     // Get the inserted product
-    const [newProduct] = await pool.query("SELECT * FROM Products WHERE id = ?", [result.insertId]);
+    const [newProduct] = await pool.query("SELECT * FROM products WHERE id = ?", [result.insertId]);
     
     res.status(201).json({ 
       success: true, 
@@ -152,11 +152,11 @@ router.post("/upload", upload.single('image'), async (req, res) => {
     const image = req.file ? req.file.filename : null;
     
     // Check what columns exist in your Products table
-    const [columns] = await pool.query("SHOW COLUMNS FROM Products");
+    const [columns] = await pool.query("SHOW COLUMNS FROM products");
     const columnNames = columns.map(col => col.Field);
     
     // Build dynamic query based on available columns
-    let query = "INSERT INTO Products (name, category, price";
+    let query = "INSERT INTO products (name, category, price";
     let values = [name, category, parseFloat(price)];
     let placeholders = "?, ?, ?";
     
@@ -180,7 +180,7 @@ router.post("/upload", upload.single('image'), async (req, res) => {
     const [result] = await pool.query(query, values);
 
     // Get the inserted product
-    const [newProduct] = await pool.query("SELECT * FROM Products WHERE id = ?", [result.insertId]);
+    const [newProduct] = await pool.query("SELECT * FROM products WHERE id = ?", [result.insertId]);
     
     res.status(201).json({ 
       success: true, 
@@ -206,13 +206,13 @@ router.put("/:id", async (req, res) => {
     const { name, category, price, description, image } = req.body;
     
     // Check if product exists
-    const [existing] = await pool.query("SELECT * FROM Products WHERE id = ?", [id]);
+    const [existing] = await pool.query("SELECT * FROM products WHERE id = ?", [id]);
     if (existing.length === 0) {
       return res.status(404).json({ success: false, message: "Product not found" });
     }
 
     // Check what columns exist
-    const [columns] = await pool.query("SHOW COLUMNS FROM Products");
+    const [columns] = await pool.query("SHOW COLUMNS FROM products");
     const columnNames = columns.map(col => col.Field);
 
     // Build dynamic update query
@@ -240,7 +240,7 @@ router.put("/:id", async (req, res) => {
     await pool.query(query, values);
 
     // Get updated product
-    const [updated] = await pool.query("SELECT * FROM Products WHERE id = ?", [id]);
+    const [updated] = await pool.query("SELECT * FROM products WHERE id = ?", [id]);
     
     res.json({ 
       success: true, 
@@ -267,13 +267,13 @@ router.put("/:id/upload", upload.single('image'), async (req, res) => {
     const { name, category, price, description } = req.body;
     
     // Check if product exists
-    const [existing] = await pool.query("SELECT * FROM Products WHERE id = ?", [id]);
+    const [existing] = await pool.query("SELECT * FROM products WHERE id = ?", [id]);
     if (existing.length === 0) {
       return res.status(404).json({ success: false, message: "Product not found" });
     }
 
     // Check what columns exist
-    const [columns] = await pool.query("SHOW COLUMNS FROM Products");
+    const [columns] = await pool.query("SHOW COLUMNS FROM products");
     const columnNames = columns.map(col => col.Field);
     
     let image;
@@ -314,7 +314,7 @@ router.put("/:id/upload", upload.single('image'), async (req, res) => {
     await pool.query(query, values);
 
     // Get updated product
-    const [updated] = await pool.query("SELECT * FROM Products WHERE id = ?", [id]);
+    const [updated] = await pool.query("SELECT * FROM products WHERE id = ?", [id]);
     
     res.json({ 
       success: true, 
@@ -336,13 +336,13 @@ router.delete("/:id", async (req, res) => {
     const { id } = req.params;
     
     // Check if product exists
-    const [existing] = await pool.query("SELECT * FROM Products WHERE id = ?", [id]);
+    const [existing] = await pool.query("SELECT * FROM products WHERE id = ?", [id]);
     if (existing.length === 0) {
       return res.status(404).json({ success: false, message: "Product not found" });
     }
 
     // Check if image column exists
-    const [columns] = await pool.query("SHOW COLUMNS FROM Products");
+    const [columns] = await pool.query("SHOW COLUMNS FROM products");
     const columnNames = columns.map(col => col.Field);
     
     // Delete image file if exists and column exists
@@ -356,7 +356,7 @@ router.delete("/:id", async (req, res) => {
       }
     }
 
-    await pool.query("DELETE FROM Products WHERE id = ?", [id]);
+    await pool.query("DELETE FROM products WHERE id = ?", [id]);
     
     res.json({ 
       success: true, 
