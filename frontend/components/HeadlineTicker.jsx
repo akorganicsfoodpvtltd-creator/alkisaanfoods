@@ -41,7 +41,7 @@ export default function HeadlineTicker() {
         console.log("📡 Fetching stores from backend...");
         
         // ✅ Backend API call
-       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/stores`);
+        const res = await fetch('http://localhost:5000/api/stores');
         
         if (!res.ok) {
           throw new Error(`HTTP error! status: ${res.status}`);
@@ -281,7 +281,7 @@ export default function HeadlineTicker() {
         }
         
         .animate-scroll-extremely-slow {
-          animation: scroll-extremely-slow 180s linear infinite; /* 🐢🐢 EXTREMELY SLOW - 180 seconds (3 minutes) */
+          animation: scroll-extremely-slow 60s linear infinite; /* 🐢🐢 EXTREMELY SLOW - 180 seconds (3 minutes) */
           display: flex;
           width: fit-content;
         }
@@ -319,13 +319,13 @@ export default function HeadlineTicker() {
         
         @media (max-width: 768px) {
           .animate-scroll-extremely-slow {
-            animation: scroll-extremely-slow 140s linear infinite; /* 2 minutes 20 seconds on mobile */
+            animation: scroll-extremely-slow 50s linear infinite; /* 2 minutes 20 seconds on mobile */
           }
         }
         
         @media (max-width: 480px) {
           .animate-scroll-extremely-slow {
-            animation: scroll-extremely-slow 120s linear infinite; /* 2 minutes on small mobile */
+            animation: scroll-extremely-slow 40s linear infinite; /* 2 minutes on small mobile */
           }
         }
       `}</style>
