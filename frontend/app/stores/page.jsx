@@ -30,13 +30,13 @@ export default function StoresPage() {
     }
     
     // If it's a local file
-    return `http://localhost:5000/uploads/${storeImage}`;
+    return `${process.env.NEXT_PUBLIC_API_URL}/uploads/${storeImage}`;
   };
 
   useEffect(() => {
     const controller = new AbortController();
 
-    fetch("http://localhost:5000/api/stores", { signal: controller.signal })
+   fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/stores`,{ signal: controller.signal })
       .then((res) => res.json())
       .then((data) => {
         console.log("✅ API Response - Total records:", data.length);
