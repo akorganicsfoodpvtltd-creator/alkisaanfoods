@@ -11,6 +11,7 @@ export default function FindNearestStore() {
   const [showManualInput, setShowManualInput] = useState(false);
   const [manualCoords, setManualCoords] = useState({ lat: '', lng: '' });
   const [locationPermission, setLocationPermission] = useState('prompt');
+  const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 
   // Check location permission status
   useEffect(() => {
@@ -29,7 +30,7 @@ export default function FindNearestStore() {
   // Fetch branches from backend - FIXED for your backend response
   const fetchBranches = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/stores");
+     const res = await fetch(`${API_BASE}/api/stores`);
       if (!res.ok) throw new Error("Failed to fetch stores");
       
       const data = await res.json();
