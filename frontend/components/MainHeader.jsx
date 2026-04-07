@@ -73,7 +73,7 @@ const LoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
     setStatus({ type: 'info', message: "Redirecting to Google..." });
     
     try {
-      const googleAuthUrl = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/api/auth/google`;
+     const googleAuthUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/auth/google`;
       window.location.href = googleAuthUrl;
     } catch (error) {
       console.error("Google login error:", error);
@@ -103,7 +103,7 @@ const LoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
 
     try {
       console.log("Sending verification code to:", email);
-      const response = await axios.post("/api/auth/send-code", { 
+    const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/send-code`, { 
         email
       });
 
@@ -214,7 +214,7 @@ const LoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
 
     try {
       console.log("Verifying code:", verificationCode, "for email:", email);
-      const response = await axios.post("/api/auth/verify-code", {
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/verify-code`, {
         email,
         code: verificationCode
       });
@@ -260,7 +260,7 @@ const LoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
     setStatus({ type: 'info', message: "Sending new code..." });
     
     try {
-      const response = await axios.post("/api/auth/resend-code", { email });
+    const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/resend-code`, { email });
       
       if (response.data.success) {
         setCountdown(60);
