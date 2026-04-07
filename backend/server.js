@@ -26,6 +26,7 @@ app.use(cors({
   origin: [
     'https://alkissanfoods.com',
     'https://www.alkissanfoods.com',
+    "https://alkisaanfoods-gtsr.vercel.app",
     'http://localhost:3000'
   ],                    // ← yahan comma tha missing
   credentials: true,
