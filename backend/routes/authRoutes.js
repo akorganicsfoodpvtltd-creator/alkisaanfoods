@@ -1,21 +1,17 @@
 import express from "express";
 import passport from "passport";
 import jwt from "jsonwebtoken";
-
 import {
   login,
   logout,
   getMe,
   signup
 } from "../controllers/authController.js";
-
 import {
   sendVerificationCode,
   verifyCode,
   resendCode
 } from "../controllers/emailAuthController.js";
-
-
 
 const router = express.Router();
 
@@ -56,7 +52,7 @@ router.get(
     try {
       const userEmail = req.user.email || req.user.Email;
       if (!userEmail) {
-       return res.redirect(`${process.env.FRONTEND_URL}/?error=email_not_found`);
+        return res.redirect(`${process.env.FRONTEND_URL}/?error=email_not_found`);
       }
 
       const normalizedEmail = userEmail.trim().toLowerCase();
@@ -77,29 +73,30 @@ router.get(
         { expiresIn: "3d" }
       );
 
+      // ✅ FIXED: sameSite "none" for cross-domain (Vercel + Railway)
       res.cookie("jwt", token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
+        secure: true,
+        sameSite: "none",
         maxAge: 3 * 24 * 60 * 60 * 1000,
       });
 
       res.cookie("user_session", "active", {
         httpOnly: false,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
+        secure: true,
+        sameSite: "none",
         maxAge: 3 * 24 * 60 * 60 * 1000,
       });
 
       if (isAdmin) {
-       return res.redirect(`${process.env.FRONTEND_URL}/admin/dashboard`);
+        return res.redirect(`${process.env.FRONTEND_URL}/admin/dashboard`);
       } else {
-       return res.redirect(`${process.env.FRONTEND_URL}/`);
+        return res.redirect(`${process.env.FRONTEND_URL}/`);
       }
 
     } catch (err) {
       console.error("Google callback error:", err);
-     return res.redirect(`${process.env.FRONTEND_URL}/?error=login_failed`);
+      return res.redirect(`${process.env.FRONTEND_URL}/?error=login_failed`);
     }
   }
 );
