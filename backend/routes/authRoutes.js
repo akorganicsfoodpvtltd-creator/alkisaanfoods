@@ -50,13 +50,13 @@ router.get(
   "/google/callback",
   passport.authenticate("google", { 
     session: false,
-    failureRedirect: "http://localhost:3000/?error=login_failed"
+    failureRedirect: `${process.env.FRONTEND_URL}/?error=login_failed`
   }),
   (req, res) => {
     try {
       const userEmail = req.user.email || req.user.Email;
       if (!userEmail) {
-        return res.redirect("http://localhost:3000/?error=email_not_found");
+       return res.redirect(`${process.env.FRONTEND_URL}/?error=email_not_found`);
       }
 
       const normalizedEmail = userEmail.trim().toLowerCase();
@@ -92,14 +92,14 @@ router.get(
       });
 
       if (isAdmin) {
-        return res.redirect("http://localhost:3000/admin/dashboard");
+       return res.redirect(`${process.env.FRONTEND_URL}/admin/dashboard`);
       } else {
-        return res.redirect("http://localhost:3000/");
+       return res.redirect(`${process.env.FRONTEND_URL}/`);
       }
 
     } catch (err) {
       console.error("Google callback error:", err);
-      return res.redirect("http://localhost:3000/?error=login_failed");
+     return res.redirect(`${process.env.FRONTEND_URL}/?error=login_failed`);
     }
   }
 );
