@@ -545,21 +545,40 @@ export default function MainHeader() {
     return "User";
   };
 
-  // ✅ FIX 4: Google login ke baad URL se token read karo
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get('token');
+  // ✅ REPLACE your existing FIX 4 useEffect with this
+useEffect(() => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const token = urlParams.get('token');
 
-    if (token) {
-      localStorage.setItem('authToken', token);
-      // URL se token hata do
-      const cleanUrl = window.location.pathname;
-      window.history.replaceState({}, document.title, cleanUrl);
+  if (token) {
+    // Save token to localStorage
+    localStorage.setItem('authToken', token);
+    
+    // Clean URL immediately
+    window.history.replaceState({}, document.title, window.location.pathname);
+    
+    // Decode token directly — skip fetchUser to avoid race condition
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      setUser({
+        id: payload.id,
+        email: payload.email,
+        name: payload.name,
+        role: payload.role,
+        loginMethod: payload.loginMethod || 'google',
+      });
+    } catch (e) {
+      console.error('Failed to decode token:', e);
     }
 
-    fetchUser();
     fetchCart();
-  }, [fetchUser, fetchCart]);
+    return; // ← skip fetchUser entirely
+  }
+
+  // Normal page load — no token in URL
+  fetchUser();
+  fetchCart();
+}, [fetchUser, fetchCart]);
 
   useEffect(() => {
     const fetchSearch = async () => {
