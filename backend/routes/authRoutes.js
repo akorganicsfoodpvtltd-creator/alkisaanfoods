@@ -1,12 +1,14 @@
 import express from "express";
 import passport from "passport";
 import jwt from "jsonwebtoken";
+
 import {
   login,
   logout,
   getMe,
   signup
 } from "../controllers/authController.js";
+
 import {
   sendVerificationCode,
   verifyCode,
@@ -35,7 +37,7 @@ router.post("/logout", logout);
 // Google OAuth login route
 router.get(
   "/google",
-  passport.authenticate("google", { 
+  passport.authenticate("google", {
     scope: ["profile", "email"],
     prompt: "select_account"
   })
@@ -44,7 +46,7 @@ router.get(
 // Google OAuth callback route
 router.get(
   "/google/callback",
-  passport.authenticate("google", { 
+  passport.authenticate("google", {
     session: false,
     failureRedirect: `${process.env.FRONTEND_URL}/?error=login_failed`
   }),
@@ -56,15 +58,15 @@ router.get(
       }
 
       const normalizedEmail = userEmail.trim().toLowerCase();
-      
+
       const adminEmail = "akoranicsfoodpvtltd@gmail.com";
       const isAdmin = normalizedEmail === adminEmail.toLowerCase();
       const role = isAdmin ? "admin" : "user";
-      
+
       const token = jwt.sign(
-        { 
-          id: req.user.id || Date.now(), 
-          email: normalizedEmail, 
+        {
+          id: req.user.id || Date.now(),
+          email: normalizedEmail,
           role: role,
           name: req.user.displayName || normalizedEmail.split("@")[0],
           loginMethod: 'google'
@@ -73,7 +75,7 @@ router.get(
         { expiresIn: "3d" }
       );
 
-      // ✅ FIXED: sameSite "none" for cross-domain (Vercel + Railway)
+      // ✅ Cookie: sameSite "none" for cross-domain (Vercel + Railway)
       res.cookie("jwt", token, {
         httpOnly: true,
         secure: true,
@@ -88,10 +90,12 @@ router.get(
         maxAge: 3 * 24 * 60 * 60 * 1000,
       });
 
+      // ✅ FIX: Also pass token in URL so frontend can save it to localStorage
+      // This matches the frontend's FIX 4 which reads ?token= from URL params
       if (isAdmin) {
-        return res.redirect(`${process.env.FRONTEND_URL}/admin/dashboard`);
+        return res.redirect(`${process.env.FRONTEND_URL}/admin/dashboard?token=${token}`);
       } else {
-        return res.redirect(`${process.env.FRONTEND_URL}/`);
+        return res.redirect(`${process.env.FRONTEND_URL}/?token=${token}`);
       }
 
     } catch (err) {
@@ -103,8 +107,8 @@ router.get(
 
 // TEST endpoint to verify routes are working
 router.get("/test", (req, res) => {
-  res.json({ 
-    success: true, 
+  res.json({
+    success: true,
     message: "Auth API is working",
     endpoints: {
       "POST /api/auth/send-code": "Send verification code",
