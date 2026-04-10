@@ -557,19 +557,24 @@ useEffect(() => {
     // Clean URL immediately
     window.history.replaceState({}, document.title, window.location.pathname);
     
-    // Decode token directly — skip fetchUser to avoid race condition
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      setUser({
-        id: payload.id,
-        email: payload.email,
-        name: payload.name,
-        role: payload.role,
-        loginMethod: payload.loginMethod || 'google',
-      });
-    } catch (e) {
-      console.error('Failed to decode token:', e);
-    }
+   // ✅ NAYA CODE
+try {
+  const payload = JSON.parse(atob(token.split('.')[1]));
+  setUser({
+    id: payload.id,
+    email: payload.email,
+    name: payload.name,
+    role: payload.role,
+    loginMethod: payload.loginMethod || 'google',
+  });
+
+  // ✅ Admin ko dashboard pe bhejo AFTER token save
+  if (payload.role === 'admin') {
+    router.push('/admin/dashboard');
+  }
+} catch (e) {
+  console.error('Failed to decode token:', e);
+}
 
     fetchCart();
     return; // ← skip fetchUser entirely
