@@ -154,7 +154,6 @@ const LoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
     try {
       const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/verify-code`, { email, code: verificationCode });
       if (response.data.success) {
-        // ✅ FIX 1: Email login ke baad bhi token save karo
         if (response.data.token) {
           localStorage.setItem('authToken', response.data.token);
         }
@@ -488,12 +487,15 @@ export default function MainHeader() {
     }
   }, []);
 
-  // ✅ FIX 2: fetchUser mein token URL se check karo aur localStorage use karo
   const fetchUser = useCallback(async () => {
     try {
+      const token = localStorage.getItem('authToken');
       const res = await axios.get(
         `${process.env.NEXT_PUBLIC_API_URL}/api/auth/me`,
-        { withCredentials: true }
+        {
+          withCredentials: true,
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        }
       );
       if (res.data.success && res.data.user) {
         setUser(res.data.user);
@@ -519,7 +521,6 @@ export default function MainHeader() {
       setUser(null);
       setCart([]);
       setCartCount(0);
-      // ✅ FIX 3: Logout pe token bhi clear karo
       localStorage.removeItem('authToken');
       sessionStorage.clear();
       window.location.href = "/";
@@ -545,45 +546,41 @@ export default function MainHeader() {
     return "User";
   };
 
-  // ✅ REPLACE your existing FIX 4 useEffect with this
-useEffect(() => {
-  const urlParams = new URLSearchParams(window.location.search);
-  const token = urlParams.get('token');
+  // ✅ FIXED useEffect — no admin redirect here, dashboard handles it itself
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
 
-  if (token) {
-    // Save token to localStorage
-    localStorage.setItem('authToken', token);
-    
-    // Clean URL immediately
-    window.history.replaceState({}, document.title, window.location.pathname);
-    
-   // ✅ NAYA CODE
-try {
-  const payload = JSON.parse(atob(token.split('.')[1]));
-  setUser({
-    id: payload.id,
-    email: payload.email,
-    name: payload.name,
-    role: payload.role,
-    loginMethod: payload.loginMethod || 'google',
-  });
+    if (token) {
+      // Save token to localStorage
+      localStorage.setItem('authToken', token);
 
-  // ✅ Admin ko dashboard pe bhejo AFTER token save
-  if (payload.role === 'admin') {
-    router.push('/admin/dashboard');
-  }
-} catch (e) {
-  console.error('Failed to decode token:', e);
-}
+      // Clean URL immediately
+      window.history.replaceState({}, document.title, window.location.pathname);
 
+      // Decode token and set user — NO router.push here
+      // Admin dashboard page handles its own auth check
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        setUser({
+          id: payload.id,
+          email: payload.email,
+          name: payload.name,
+          role: payload.role,
+          loginMethod: payload.loginMethod || 'google',
+        });
+      } catch (e) {
+        console.error('Failed to decode token:', e);
+      }
+
+      fetchCart();
+      return;
+    }
+
+    // Normal page load — no token in URL
+    fetchUser();
     fetchCart();
-    return; // ← skip fetchUser entirely
-  }
-
-  // Normal page load — no token in URL
-  fetchUser();
-  fetchCart();
-}, [fetchUser, fetchCart]);
+  }, [fetchUser, fetchCart]);
 
   useEffect(() => {
     const fetchSearch = async () => {
