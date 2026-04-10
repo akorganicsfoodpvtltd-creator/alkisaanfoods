@@ -1,14 +1,12 @@
 import express from "express";
 import passport from "passport";
 import jwt from "jsonwebtoken";
-
 import {
   login,
   logout,
   getMe,
   signup
 } from "../controllers/authController.js";
-
 import {
   sendVerificationCode,
   verifyCode,
@@ -20,7 +18,7 @@ const router = express.Router();
 // Email/Password Login
 router.post("/login", login);
 
-// NEW: Email OTP Login Routes
+// Email OTP Login Routes
 router.post("/send-code", sendVerificationCode);
 router.post("/verify-code", verifyCode);
 router.post("/resend-code", resendCode);
@@ -59,8 +57,12 @@ router.get(
 
       const normalizedEmail = userEmail.trim().toLowerCase();
 
-      const adminEmail = "akoranicsfoodpvtltd@gmail.com";
-      const isAdmin = normalizedEmail === adminEmail.toLowerCase();
+      // ✅ FIXED: Both admin emails included (matching authController.js)
+      const companyEmails = [
+        "akorganicsfoodpvtltd@gmail.com",
+        "akoranicsfoodpvtltd@gmail.com"
+      ];
+      const isAdmin = companyEmails.includes(normalizedEmail);
       const role = isAdmin ? "admin" : "user";
 
       const token = jwt.sign(
@@ -69,13 +71,13 @@ router.get(
           email: normalizedEmail,
           role: role,
           name: req.user.displayName || normalizedEmail.split("@")[0],
-          loginMethod: 'google'
+          loginMethod: "google"
         },
         process.env.JWT_SECRET,
         { expiresIn: "3d" }
       );
 
-      // ✅ Cookie: sameSite "none" for cross-domain (Vercel + Railway)
+      // Cookie for same-domain requests
       res.cookie("jwt", token, {
         httpOnly: true,
         secure: true,
@@ -90,8 +92,13 @@ router.get(
         maxAge: 3 * 24 * 60 * 60 * 1000,
       });
 
-      // ✅ NAYA CODE (replace karo)
-return res.redirect(`${process.env.FRONTEND_URL}/?token=${token}`);
+      // ✅ FIXED: Admin goes directly to dashboard with token
+      // Dashboard page reads token from URL itself
+      if (isAdmin) {
+        return res.redirect(`${process.env.FRONTEND_URL}/admin/dashboard?token=${token}`);
+      } else {
+        return res.redirect(`${process.env.FRONTEND_URL}/?token=${token}`);
+      }
 
     } catch (err) {
       console.error("Google callback error:", err);
@@ -100,7 +107,7 @@ return res.redirect(`${process.env.FRONTEND_URL}/?token=${token}`);
   }
 );
 
-// TEST endpoint to verify routes are working
+// TEST endpoint
 router.get("/test", (req, res) => {
   res.json({
     success: true,
