@@ -90,13 +90,8 @@ router.get(
         maxAge: 3 * 24 * 60 * 60 * 1000,
       });
 
-      // ✅ FIX: Also pass token in URL so frontend can save it to localStorage
-      // This matches the frontend's FIX 4 which reads ?token= from URL params
-      if (isAdmin) {
-        return res.redirect(`${process.env.FRONTEND_URL}/admin/dashboard?token=${token}`);
-      } else {
-        return res.redirect(`${process.env.FRONTEND_URL}/?token=${token}`);
-      }
+      // ✅ NAYA CODE (replace karo)
+return res.redirect(`${process.env.FRONTEND_URL}/?token=${token}`);
 
     } catch (err) {
       console.error("Google callback error:", err);
