@@ -14,7 +14,7 @@ import { SiGooglemaps } from "react-icons/si";
 export default function TopHeader() {
 
   const messages = [
-    "Welcome to Al Kissan Food Store",
+    "Welcome to Al Kissan Foods Store",
     "Order Now & Live Natural",
     "Al Kissan Gluten Free Flour",
     "Al Kissan Multigrain Flour",
