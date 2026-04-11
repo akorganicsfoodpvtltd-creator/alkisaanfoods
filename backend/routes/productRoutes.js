@@ -141,7 +141,7 @@ router.post("/upload", upload.single('image'), async (req, res) => {
     const { name, category, price, description } = req.body;
     
     // Validation
-    if (!name || !category || !price) {
+   if (!name || !category || (price === undefined || price === null || price === "")) {
       return res.status(400).json({ 
         success: false, 
         message: "Name, category, and price are required fields" 
@@ -216,7 +216,7 @@ router.put("/:id", async (req, res) => {
     const columnNames = columns.map(col => col.Field);
 
     // Build dynamic update query
-    let query = "UPDATE Products SET name = ?, category = ?, price = ?";
+    let query = "UPDATE products SET name = ?, category = ?, price = ?";
     let values = [name, category, parseFloat(price)];
     
     if (columnNames.includes('description')) {
@@ -292,7 +292,7 @@ router.put("/:id/upload", upload.single('image'), async (req, res) => {
     }
 
     // Build dynamic update query
-    let query = "UPDATE Products SET name = ?, category = ?, price = ?";
+    let query = "UPDATE products SET name = ?, category = ?, price = ?";
     let values = [name, category, parseFloat(price)];
     
     if (columnNames.includes('description')) {
