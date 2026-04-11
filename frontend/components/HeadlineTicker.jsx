@@ -18,75 +18,58 @@ export default function HeadlineTicker() {
     setMounted(true);
   }, []);
 
-  // Mobile check
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const checkMobile = () => {
-        setIsMobile(window.innerWidth < 768);
-      };
-      
+    if (typeof window !== "undefined") {
+      const checkMobile = () => setIsMobile(window.innerWidth < 768);
       checkMobile();
-      window.addEventListener('resize', checkMobile);
-      return () => window.removeEventListener('resize', checkMobile);
+      window.addEventListener("resize", checkMobile);
+      return () => window.removeEventListener("resize", checkMobile);
     }
   }, []);
 
-  // 🟢 FETCH STORES FROM BACKEND
   useEffect(() => {
     const fetchStores = async () => {
       try {
         setLoading(true);
         setError("");
-        
-        console.log("📡 Fetching stores from backend...");
-        
-        // ✅ Backend API call
-        const res = await fetch('http://localhost:5000/api/stores');
-        
+
+        // ✅ FIX: localhost hata ke env variable use karo
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/stores`);
+
         if (!res.ok) {
           throw new Error(`HTTP error! status: ${res.status}`);
         }
-        
+
         const data = await res.json();
-        console.log("✅ Stores received:", data);
-        
+
         if (!data || data.length === 0) {
-          console.log("⚠️ No stores found, using fallback");
           setStores(getFallbackStores());
           return;
         }
 
-        // ✅ FIXED: Sirf EXACT duplicates hatayega
         const uniqueStores = [];
         const storeKeys = new Set();
-        
+
         data.forEach(store => {
           const storeName = store.store_name?.trim() || "";
           const branchName = store.branch_name?.trim() || store.Branch?.trim() || "Main";
-          
           const uniqueKey = `${storeName.toLowerCase()}|${branchName.toLowerCase()}`;
-          
-          if (!storeName || storeKeys.has(uniqueKey)) {
-            console.log(`⏭️ Skipping duplicate: ${storeName} (${branchName})`);
-            return;
-          }
-          
+
+          if (!storeName || storeKeys.has(uniqueKey)) return;
+
           storeKeys.add(uniqueKey);
           uniqueStores.push(store);
         });
 
-        console.log(`✅ ${uniqueStores.length} stores after duplicate check`);
-
-        // ✅ Format stores for ticker
         const formattedStores = uniqueStores.map(store => {
           const branchName = store.branch_name || store.Branch || "";
           const storeName = store.store_name || "Store";
-          
+
           let displayName = storeName;
           if (branchName && branchName !== "Main" && branchName !== "main") {
             displayName = `${storeName} (${branchName})`;
           }
-          
+
           return {
             id: store.id,
             text: `Available At ${displayName}`,
@@ -94,15 +77,14 @@ export default function HeadlineTicker() {
             storeName: displayName,
             originalName: storeName,
             branch: branchName,
-            city: store.city
+            city: store.city,
           };
         });
-        
-        console.log("✅ Formatted stores:", formattedStores);
+
         setStores(formattedStores);
-        
+
       } catch (err) {
-        console.error('❌ Error fetching stores:', err);
+        console.error("❌ Error fetching stores:", err);
         setError(err.message);
         setStores(getFallbackStores());
       } finally {
@@ -113,57 +95,27 @@ export default function HeadlineTicker() {
     fetchStores();
   }, []);
 
-  // 🟢 FALLBACK STORES
   const getFallbackStores = () => [
-    { 
-      id: 1,
-      text: "Available At Risen Cash & Carry", 
-      logo: "/Risen Store Logo.png", 
-      storeName: "Risen Cash & Carry" 
-    },
-    { 
-      id: 2,
-      text: "Available At Rainbow Cash & Carry", 
-      logo: "/Rainbow Store Logo.jpeg", 
-      storeName: "Rainbow Cash & Carry" 
-    },
-    { 
-      id: 3,
-      text: "Available At Victoria Departmental Store", 
-      logo: "/Victoria Store Logo.jpeg", 
-      storeName: "Victoria Departmental Store" 
-    },
-    { 
-      id: 4,
-      text: "Available At Swera Departmental Store", 
-      logo: "/Swera Store Logo.jpeg", 
-      storeName: "Swera Departmental Store" 
-    },
-    { 
-      id: 5,
-      text: "Available At Rubaika Cash & Carry", 
-      logo: "/Rubaika Store Logo.png", 
-      storeName: "Rubaika Cash & Carry" 
-    },
+    { id: 1, text: "Available At Risen Cash & Carry", logo: "/Risen Store Logo.png", storeName: "Risen Cash & Carry" },
+    { id: 2, text: "Available At Rainbow Cash & Carry", logo: "/Rainbow Store Logo.jpeg", storeName: "Rainbow Cash & Carry" },
+    { id: 3, text: "Available At Victoria Departmental Store", logo: "/Victoria Store Logo.jpeg", storeName: "Victoria Departmental Store" },
+    { id: 4, text: "Available At Swera Departmental Store", logo: "/Swera Store Logo.jpeg", storeName: "Swera Departmental Store" },
+    { id: 5, text: "Available At Rubaika Cash & Carry", logo: "/Rubaika Store Logo.png", storeName: "Rubaika Cash & Carry" },
   ];
 
-  // 🟢 Handle image error
   const handleImageError = (storeId) => {
     setImageErrors(prev => ({ ...prev, [storeId]: true }));
   };
 
-  // Filter out stores with failed images
   const validStores = stores.filter(store => {
     if (!imageErrors[store.id]) return true;
-    return store.logo.startsWith('/');
+    return store.logo.startsWith("/");
   });
 
-  // Triple duplicate for smoother slow scrolling
-  const scrollingHeadlines = validStores.length > 0 
-    ? [...validStores, ...validStores, ...validStores] 
+  const scrollingHeadlines = validStores.length > 0
+    ? [...validStores, ...validStores, ...validStores]
     : [...getFallbackStores(), ...getFallbackStores(), ...getFallbackStores()];
 
-  // Loading state
   if (loading) {
     return (
       <div className="w-full border-y border-blue-100 bg-white">
@@ -175,7 +127,6 @@ export default function HeadlineTicker() {
     );
   }
 
-  // Error state
   if (error && stores.length === 0) {
     return (
       <div className="w-full border-y border-blue-100 bg-white">
@@ -195,17 +146,15 @@ export default function HeadlineTicker() {
   return (
     <div className="w-full relative overflow-hidden border-y border-blue-100 bg-white">
       <div className="flex flex-col md:flex-row">
-        {/* Left side - Fixed content */}
+        {/* Left side */}
         <div className="hidden md:flex items-center px-6 py-3 bg-gradient-to-r from-blue-50 to-white border-r border-blue-100">
           <div className="flex items-center gap-2">
             <FaStore className="text-lg" style={{ color: PRIMARY_BLUE }} />
-            <span className="font-semibold text-gray-800 whitespace-nowrap">
-              Available At
-            </span>
+            <span className="font-semibold text-gray-800 whitespace-nowrap">Available At</span>
           </div>
         </div>
 
-        {/* Middle - Scrolling ticker - 🐢 EXTREMELY SLOW SPEED */}
+        {/* Scrolling ticker */}
         <div className="flex-1 overflow-hidden">
           <div className="flex items-center h-full">
             <div className="flex animate-scroll-extremely-slow">
@@ -214,7 +163,6 @@ export default function HeadlineTicker() {
                   key={`${headline.id}-${idx}`}
                   className="flex items-center justify-center gap-3 md:gap-4 px-4 md:px-8 py-3 whitespace-nowrap"
                 >
-                  {/* Store Logo */}
                   <div className="relative h-5 w-12 md:h-6 md:w-16">
                     {!imageErrors[headline.id] ? (
                       <Image
@@ -231,16 +179,11 @@ export default function HeadlineTicker() {
                       </div>
                     )}
                   </div>
-                  
-                  {/* Store Name */}
-                  <span 
-                    className="font-medium text-xs md:text-sm lg:text-base"
-                    style={{ color: PRIMARY_BLUE }}
-                  >
+
+                  <span className="font-medium text-xs md:text-sm lg:text-base" style={{ color: PRIMARY_BLUE }}>
                     {headline.storeName}
                   </span>
-                  
-                  {/* Separator */}
+
                   <div className="h-4 w-px bg-blue-200"></div>
                 </div>
               ))}
@@ -252,18 +195,17 @@ export default function HeadlineTicker() {
         <div className="flex items-center justify-center md:justify-start px-2 py-2 md:px-4 md:py-0 border-t md:border-t-0 border-blue-100">
           <button
             className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm md:text-base text-white hover:shadow-lg transition-all duration-300 whitespace-nowrap animate-pulse-slow relative overflow-hidden group
-              ${isHovered ? 'ring-2 ring-white ring-offset-2 ring-offset-blue-600' : ''}`}
+              ${isHovered ? "ring-2 ring-white ring-offset-2 ring-offset-blue-600" : ""}`}
             style={{ backgroundColor: PRIMARY_BLUE }}
-            onClick={() => window.location.href = "/find-nearest-store"}
+            onClick={() => (window.location.href = "/find-nearest-store")}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
           >
             <FaMapMarkerAlt className="text-sm animate-bounce-slow" />
             <span>Find Store Near You</span>
-            
             {mounted && isMobile && (
               <svg className="ml-1 animate-bounce-vertical" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path d="M12 5v14M5 12l7 7 7-7"/>
+                <path d="M12 5v14M5 12l7 7 7-7" />
               </svg>
             )}
           </button>
@@ -272,60 +214,46 @@ export default function HeadlineTicker() {
 
       <style jsx>{`
         @keyframes scroll-extremely-slow {
-          0% {
-            transform: translateX(0);
-          }
-          100% {
-            transform: translateX(-33.33%);
-          }
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-33.33%); }
         }
-        
         .animate-scroll-extremely-slow {
-          animation: scroll-extremely-slow 60s linear infinite; /* 🐢🐢 EXTREMELY SLOW - 180 seconds (3 minutes) */
+          animation: scroll-extremely-slow 60s linear infinite;
           display: flex;
           width: fit-content;
         }
-        
         .animate-scroll-extremely-slow:hover {
           animation-play-state: paused;
         }
-        
         .animate-pulse-slow {
           animation: pulse-slow 2s ease-in-out infinite;
         }
-        
         .animate-bounce-slow {
           animation: bounce-slow 2s ease-in-out infinite;
         }
-        
         .animate-bounce-vertical {
           animation: bounce-vertical 1.5s ease-in-out infinite;
         }
-        
         @keyframes pulse-slow {
           0%, 100% { opacity: 1; transform: scale(1); }
           50% { opacity: 0.95; transform: scale(1.02); }
         }
-        
         @keyframes bounce-slow {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-2px); }
         }
-        
         @keyframes bounce-vertical {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(3px); }
         }
-        
         @media (max-width: 768px) {
           .animate-scroll-extremely-slow {
-            animation: scroll-extremely-slow 50s linear infinite; /* 2 minutes 20 seconds on mobile */
+            animation: scroll-extremely-slow 50s linear infinite;
           }
         }
-        
         @media (max-width: 480px) {
           .animate-scroll-extremely-slow {
-            animation: scroll-extremely-slow 40s linear infinite; /* 2 minutes on small mobile */
+            animation: scroll-extremely-slow 40s linear infinite;
           }
         }
       `}</style>
