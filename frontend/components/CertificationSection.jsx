@@ -10,7 +10,7 @@ export default function CertificationSection() {
     { logo: "/Acerta ISO 22000+.png", name: "ISO 22000+ Food Safety System" },
     { logo: "/Acerta ISO 22000.png", name: "ISO 22000 Food Safety Management" },
     { logo: "/Pakistan Standards Logo.png", name: "Pakistan Standards & Quality Control Authority" },
-    { logo: "/Fortified Flour.png", name: "Fortified Flour Certification" }, // Fixed path
+    
     { logo: "/PCSIR Logo.png", name: "PCSIR Laboratory Approved" },
     { logo: "/Qarshi Lab.jpg", name: "Qarshi Laboratories Approved" },
   ];
