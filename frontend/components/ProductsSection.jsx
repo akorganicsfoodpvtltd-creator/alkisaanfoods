@@ -11,37 +11,33 @@ export default function ProductsSection() {
   const [buyingNow, setBuyingNow] = useState(null);
   const router = useRouter();
 
-  // Extract weight from product name or description for sorting
+  // ✅ Helper — token header banao
+  const getAuthHeaders = () => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
+    return {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+  };
+
   const extractWeight = (product) => {
-    // Look for weight patterns like "1 kg", "2.5kg", "5 kg", etc.
     const weightPattern = /(\d+(?:\.\d+)?)\s*(?:kg|KG|Kg|kgs|KGS)/i;
     const name = product.name || "";
     const description = product.description || "";
-    
     const nameMatch = name.match(weightPattern);
     if (nameMatch) return parseFloat(nameMatch[1]);
-    
     const descMatch = description.match(weightPattern);
     if (descMatch) return parseFloat(descMatch[1]);
-    
-    // Default weight for products without specified weight
-    return 999; // Put at the end
+    return 999;
   };
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`); 
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`);
         const data = await res.json();
         let productsList = data.products || [];
-        
-        // Sort products by weight: 1kg, 2kg, 2.5kg, 5kg, then others
-        productsList.sort((a, b) => {
-          const weightA = extractWeight(a);
-          const weightB = extractWeight(b);
-          return weightA - weightB;
-        });
-        
+        productsList.sort((a, b) => extractWeight(a) - extractWeight(b));
         setProducts(productsList);
       } catch (err) {
         console.error("Failed to fetch products:", err);
@@ -52,11 +48,14 @@ export default function ProductsSection() {
     fetchProducts();
   }, []);
 
-  // Fetch cart from session
+  // ✅ Cart fetch mein bhi token bhejo
   useEffect(() => {
     const fetchCart = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart`, { credentials: 'include' });
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart`, {
+          credentials: "include",
+          headers: getAuthHeaders(),
+        });
         const data = await res.json();
         if (data.success) setCartItems(data.items || []);
       } catch (err) {
@@ -66,7 +65,6 @@ export default function ProductsSection() {
     fetchCart();
   }, []);
 
-  // Listen for cart removal events to enable Add to Cart button
   useEffect(() => {
     const handleEnableAddToCart = (event) => {
       const productId = event.detail?.productId;
@@ -74,12 +72,8 @@ export default function ProductsSection() {
         setCartItems(prev => prev.filter(item => item.product_id !== productId));
       }
     };
-    
-    window.addEventListener('enableAddToCart', handleEnableAddToCart);
-    
-    return () => {
-      window.removeEventListener('enableAddToCart', handleEnableAddToCart);
-    };
+    window.addEventListener("enableAddToCart", handleEnableAddToCart);
+    return () => window.removeEventListener("enableAddToCart", handleEnableAddToCart);
   }, []);
 
   const isInCart = (productId) => cartItems.some(item => item.product_id === productId);
@@ -87,9 +81,10 @@ export default function ProductsSection() {
   const addToCart = async (product) => {
     setAddingToCart(product.id);
     try {
+      // ✅ FIX: Token header add kiya
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
         credentials: "include",
         body: JSON.stringify({ productId: product.id, quantity: 1 }),
       });
@@ -117,20 +112,23 @@ export default function ProductsSection() {
             ];
           }
         });
-        
-        window.dispatchEvent(new CustomEvent('cartItemAdded', {
-          detail: {
-            productName: product.name,
-            quantity: 1
-          }
+
+        window.dispatchEvent(new CustomEvent("cartItemAdded", {
+          detail: { productName: product.name, quantity: 1 },
         }));
-        
+
       } else {
-        alert(data.message || "Failed to add to cart");
+        // ✅ FIX: Login nahi hai to login modal open karo
+        if (res.status === 401) {
+          window.dispatchEvent(new CustomEvent("openLoginModal"));
+          alert("Please login first to add items to cart");
+        } else {
+          alert(data.message || "Failed to add to cart");
+        }
       }
     } catch (err) {
       console.error("Add to cart error:", err);
-      alert("Failed to add to cart");
+      alert("Failed to add to cart. Please try again.");
     } finally {
       setAddingToCart(null);
     }
@@ -139,17 +137,16 @@ export default function ProductsSection() {
   const handleBuyNow = async (product) => {
     setBuyingNow(product.id);
     try {
-      // First add to cart
-     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart`, {
+      // ✅ FIX: Token header add kiya
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
         credentials: "include",
         body: JSON.stringify({ productId: product.id, quantity: 1 }),
       });
       const data = await res.json();
 
       if (data.success) {
-        // Update local cart state
         setCartItems((prev) => {
           const exists = prev.find((item) => item.product_id === product.id);
           if (exists) {
@@ -171,16 +168,20 @@ export default function ProductsSection() {
             ];
           }
         });
-        
-        // Redirect to checkout page
-      router.push("/checkout");
+        router.push("/checkout");
 
       } else {
-        alert(data.message || "Failed to process order");
+        // ✅ FIX: Login nahi hai to message dikhao
+        if (res.status === 401) {
+          window.dispatchEvent(new CustomEvent("openLoginModal"));
+          alert("Please login first to purchase");
+        } else {
+          alert(data.message || "Failed to process order");
+        }
       }
     } catch (err) {
       console.error("Buy Now error:", err);
-      alert("Failed to process order");
+      alert("Failed to process order. Please try again.");
     } finally {
       setBuyingNow(null);
     }
@@ -219,8 +220,7 @@ export default function ProductsSection() {
             Our <span className="text-green-700">Products</span>
           </h2>
           <p className="text-xl text-gray-700 max-w-2xl mx-auto font-medium">
-          Shop Our Natural <span className="text-green-700"></span> Products for a Healthier Lifestyle
-       
+            Shop Our Natural Products for a Healthier Lifestyle
           </p>
         </div>
 
@@ -238,9 +238,7 @@ export default function ProductsSection() {
                 onMouseEnter={() => setHoveredCard(index)}
                 onMouseLeave={() => setHoveredCard(null)}
               >
-                <div
-                  className={`relative bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 border border-green-100 ${isHovered ? "scale-[1.02] ring-2 ring-green-100" : ""}`}
-                >
+                <div className={`relative bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-500 border border-green-100 ${isHovered ? "scale-[1.02] ring-2 ring-green-100" : ""}`}>
                   <div className="absolute top-4 left-4 z-20">
                     <div className="bg-gradient-to-r from-green-600 to-emerald-600 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-lg">
                       NATURAL
@@ -277,7 +275,6 @@ export default function ProductsSection() {
                       </div>
                     </div>
 
-                    {/* Action Buttons Container */}
                     <div className="flex gap-3">
                       <button
                         onClick={() => addToCart(product)}
@@ -322,15 +319,9 @@ export default function ProductsSection() {
                             ? "bg-blue-100 text-blue-600 cursor-wait"
                             : "text-white hover:shadow-lg hover:scale-105 cursor-pointer"
                         }`}
-                        style={{
-                          backgroundColor: 'rgba(23, 47, 132, 0.89)',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = 'rgba(23, 47, 132, 1)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = 'rgba(23, 47, 132, 0.89)';
-                        }}
+                        style={{ backgroundColor: isBuying ? undefined : "rgba(23, 47, 132, 0.89)" }}
+                        onMouseEnter={(e) => { if (!isBuying) e.currentTarget.style.backgroundColor = "rgba(23, 47, 132, 1)"; }}
+                        onMouseLeave={(e) => { if (!isBuying) e.currentTarget.style.backgroundColor = "rgba(23, 47, 132, 0.89)"; }}
                       >
                         {isBuying ? (
                           <>
