@@ -25,7 +25,6 @@ export default function ContactSection() {
     const newErrors = { name: "", email: "", subject: "", message: "" };
     let isValid = true;
 
-    // Name validation
     if (!formData.name.trim()) {
       newErrors.name = "Name is required";
       isValid = false;
@@ -34,7 +33,6 @@ export default function ContactSection() {
       isValid = false;
     }
 
-    // Email validation
     if (!formData.email.trim()) {
       newErrors.email = "Email is required";
       isValid = false;
@@ -43,7 +41,6 @@ export default function ContactSection() {
       isValid = false;
     }
 
-    // Subject validation
     if (!formData.subject.trim()) {
       newErrors.subject = "Subject is required";
       isValid = false;
@@ -52,7 +49,6 @@ export default function ContactSection() {
       isValid = false;
     }
 
-    // Message validation
     if (!formData.message.trim()) {
       newErrors.message = "Message is required";
       isValid = false;
@@ -70,21 +66,11 @@ export default function ContactSection() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    // Clear error when user starts typing
+    setFormData(prev => ({ ...prev, [name]: value }));
     if (errors[name]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: ""
-      }));
+      setErrors(prev => ({ ...prev, [name]: "" }));
     }
-    // Clear submit error
-    if (submitError) {
-      setSubmitError("");
-    }
+    if (submitError) setSubmitError("");
   };
 
   const handleSubmit = async (e) => {
@@ -95,7 +81,8 @@ export default function ContactSection() {
     setSubmitError("");
 
     try {
-      const response = await fetch("http://localhost:5000/api/contact", {
+      // ✅ FIX: localhost hata ke env variable use karo
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/contact`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
@@ -116,8 +103,8 @@ export default function ContactSection() {
 
       setFormData({ name: "", email: "", subject: "", message: "" });
       setIsSubmitted(true);
-
       setTimeout(() => setIsSubmitted(false), 10000);
+
     } catch (error) {
       console.error("Submission error:", error);
       setSubmitError(error.message || "Failed to send message.");
@@ -128,14 +115,12 @@ export default function ContactSection() {
 
   return (
     <>
-      <section id="contact" className="relative py-20 px-4 sm:px-6 lg:px-8 bg-transparent">
-        {/* Background decorative elements */}
+      <section id="contact-us" className="relative py-20 px-4 sm:px-6 lg:px-8 bg-transparent">
         <div className="absolute top-0 left-0 w-72 h-72 bg-green-100 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
         <div className="absolute top-0 right-0 w-72 h-72 bg-emerald-100 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
         <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 w-72 h-72 bg-teal-100 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
 
         <div className="relative max-w-7xl mx-auto">
-          {/* Section Header */}
           <div className="text-center mb-16">
             <div className="inline-flex items-center justify-center gap-2 mb-4">
               <div className="h-1 w-10 bg-green-500 rounded-full"></div>
@@ -144,23 +129,19 @@ export default function ContactSection() {
               </span>
               <div className="h-1 w-10 bg-green-500 rounded-full"></div>
             </div>
-            
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
               Contact <span className="text-green-700">Us</span>
             </h2>
-            
             <p className="text-gray-600 text-lg max-w-2xl mx-auto">
               Have questions about our products or services? We're here to help.
             </p>
           </div>
 
-          {/* Contact Form Container */}
           <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
             <div className="grid grid-cols-1 lg:grid-cols-3">
               {/* Left Side - Contact Info */}
               <div className="bg-gradient-to-br from-green-600 to-emerald-700 text-white p-8 md:p-12 lg:p-16">
                 <h3 className="text-2xl font-bold mb-8">Get in Touch</h3>
-                
                 <div className="space-y-8">
                   <div className="flex items-start gap-4">
                     <div className="bg-white/20 p-3 rounded-xl">
@@ -203,9 +184,9 @@ export default function ContactSection() {
                 <div className="mt-12 pt-8 border-t border-white/20">
                   <h4 className="font-semibold mb-4">Business Hours</h4>
                   <div className="space-y-2 text-sm">
-                    <p className="flex justify-between"><span>Monday - Friday</span> <span>9:00 AM - 6:00 PM</span></p>
-                    <p className="flex justify-between"><span>Saturday</span> <span>10:00 AM - 4:00 PM</span></p>
-                    <p className="flex justify-between"><span>Sunday</span> <span>Closed</span></p>
+                    <p className="flex justify-between"><span>Monday - Friday</span><span>9:00 AM - 6:00 PM</span></p>
+                    <p className="flex justify-between"><span>Saturday</span><span>10:00 AM - 4:00 PM</span></p>
+                    <p className="flex justify-between"><span>Sunday</span><span>Closed</span></p>
                   </div>
                 </div>
               </div>
@@ -222,17 +203,8 @@ export default function ContactSection() {
                       Thank you for contacting Al Kissan Foods. We'll get back to you within 24 hours.
                     </p>
                     <div className="space-y-3 mb-8">
-                      <p className="text-green-600 font-medium">
-                        ✓ Your message has been sent to our team
-                      </p>
-                      {formData.email && (
-                        <p className="text-green-600 font-medium">
-                          ✓ A confirmation email has been sent to {formData.email}
-                        </p>
-                      )}
-                      <p className="text-gray-500 text-sm">
-                        We'll contact you at {formData.email || 'the email you provided'} soon.
-                      </p>
+                      <p className="text-green-600 font-medium">✓ Your message has been sent to our team</p>
+                      <p className="text-gray-500 text-sm">We'll contact you soon.</p>
                     </div>
                     <button
                       onClick={() => setIsSubmitted(false)}
@@ -244,7 +216,6 @@ export default function ContactSection() {
                 ) : (
                   <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {/* Name Field */}
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Your Name <span className="text-red-500">*</span>
@@ -256,16 +227,13 @@ export default function ContactSection() {
                             name="name"
                             value={formData.name}
                             onChange={handleChange}
-                            className={`w-full pl-12 pr-4 py-3.5 border ${errors.name ? 'border-red-300' : 'border-gray-300'} rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all bg-white text-gray-900`}
+                            className={`w-full pl-12 pr-4 py-3.5 border ${errors.name ? "border-red-300" : "border-gray-300"} rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all bg-white text-gray-900`}
                             placeholder="Full Name"
                           />
                         </div>
-                        {errors.name && (
-                          <p className="mt-1 text-sm text-red-600">{errors.name}</p>
-                        )}
+                        {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
                       </div>
 
-                      {/* Email Field */}
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Email Address <span className="text-red-500">*</span>
@@ -277,17 +245,14 @@ export default function ContactSection() {
                             name="email"
                             value={formData.email}
                             onChange={handleChange}
-                            className={`w-full pl-12 pr-4 py-3.5 border ${errors.email ? 'border-red-300' : 'border-gray-300'} rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all bg-white text-gray-900`}
+                            className={`w-full pl-12 pr-4 py-3.5 border ${errors.email ? "border-red-300" : "border-gray-300"} rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all bg-white text-gray-900`}
                             placeholder="Your Email"
                           />
                         </div>
-                        {errors.email && (
-                          <p className="mt-1 text-sm text-red-600">{errors.email}</p>
-                        )}
+                        {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
                       </div>
                     </div>
 
-                    {/* Subject Field */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Subject <span className="text-red-500">*</span>
@@ -297,15 +262,12 @@ export default function ContactSection() {
                         name="subject"
                         value={formData.subject}
                         onChange={handleChange}
-                        className={`w-full px-4 py-3.5 border ${errors.subject ? 'border-red-300' : 'border-gray-300'} rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all bg-white text-gray-900`}
+                        className={`w-full px-4 py-3.5 border ${errors.subject ? "border-red-300" : "border-gray-300"} rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all bg-white text-gray-900`}
                         placeholder="How can we help you?"
                       />
-                      {errors.subject && (
-                        <p className="mt-1 text-sm text-red-600">{errors.subject}</p>
-                      )}
+                      {errors.subject && <p className="mt-1 text-sm text-red-600">{errors.subject}</p>}
                     </div>
 
-                    {/* Message Field */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Your Message <span className="text-red-500">*</span>
@@ -318,7 +280,7 @@ export default function ContactSection() {
                           onChange={handleChange}
                           rows={5}
                           maxLength={500}
-                          className={`w-full pl-12 pr-4 py-3.5 border ${errors.message ? 'border-red-300' : 'border-gray-300'} rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all resize-none bg-white text-gray-900`}
+                          className={`w-full pl-12 pr-4 py-3.5 border ${errors.message ? "border-red-300" : "border-gray-300"} rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all resize-none bg-white text-gray-900`}
                           placeholder="Tell us about your inquiry..."
                         />
                       </div>
@@ -328,13 +290,12 @@ export default function ContactSection() {
                         ) : (
                           <p className="text-xs text-gray-500">Please include relevant details</p>
                         )}
-                        <span className={`text-xs ${formData.message.length < 10 ? 'text-gray-400' : 'text-green-600'}`}>
+                        <span className={`text-xs ${formData.message.length < 10 ? "text-gray-400" : "text-green-600"}`}>
                           {formData.message.length}/500
                         </span>
                       </div>
                     </div>
 
-                    {/* Error Message */}
                     {submitError && (
                       <div className="bg-red-50 border border-red-200 rounded-xl p-4">
                         <div className="flex items-start">
@@ -345,14 +306,13 @@ export default function ContactSection() {
                             <p className="text-red-600 text-sm font-medium mb-1">Unable to send message</p>
                             <p className="text-red-500 text-sm">{submitError}</p>
                             <p className="text-gray-600 text-xs mt-2">
-                              You can also contact us directly at <strong>+923004809083</strong> or email <strong>akorganicsfoodpvtltd@gmail.com</strong>
+                              Contact us directly at <strong>+923004809083</strong> or <strong>akorganicsfoodpvtltd@gmail.com</strong>
                             </p>
                           </div>
                         </div>
                       </div>
                     )}
 
-                    {/* Submit Button */}
                     <button
                       type="submit"
                       disabled={isSubmitting}
@@ -373,8 +333,7 @@ export default function ContactSection() {
 
                     <p className="text-xs text-gray-500 text-center">
                       By submitting this form, you agree to our{" "}
-                      <a href="#" className="text-green-600 hover:underline">Privacy Policy</a>
-                      . We respect your privacy and will not share your information.
+                      <a href="#" className="text-green-600 hover:underline">Privacy Policy</a>.
                     </p>
                   </form>
                 )}
@@ -383,35 +342,18 @@ export default function ContactSection() {
           </div>
         </div>
 
-        {/* Custom CSS for animations */}
         <style jsx>{`
           @keyframes blob {
-            0% {
-              transform: translate(0px, 0px) scale(1);
-            }
-            33% {
-              transform: translate(30px, -50px) scale(1.1);
-            }
-            66% {
-              transform: translate(-20px, 20px) scale(0.9);
-            }
-            100% {
-              transform: translate(0px, 0px) scale(1);
-            }
+            0% { transform: translate(0px, 0px) scale(1); }
+            33% { transform: translate(30px, -50px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+            100% { transform: translate(0px, 0px) scale(1); }
           }
-          .animate-blob {
-            animation: blob 7s infinite;
-          }
-          .animation-delay-2000 {
-            animation-delay: 2s;
-          }
-          .animation-delay-4000 {
-            animation-delay: 4s;
-          }
+          .animate-blob { animation: blob 7s infinite; }
+          .animation-delay-2000 { animation-delay: 2s; }
+          .animation-delay-4000 { animation-delay: 4s; }
         `}</style>
       </section>
-      
-      {/* Add this wrapper div to ensure proper background at the bottom */}
       <div className="bg-white w-full h-0"></div>
     </>
   );
