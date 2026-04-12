@@ -1,18 +1,30 @@
 import db from "../config/db.js";
 import { v4 as uuidv4 } from "uuid";
 
-// ✅ NAYA — cross domain kaam karega
+// ✅ FIX: sessionId cookie se bhi lo, header se bhi lo
+// Frontend x-session-id header mein bhejega
 const getSessionId = (req, res) => {
-  let sessionId = req.cookies?.sessionId;
+  // Pehle header check karo (frontend se aayega)
+  let sessionId = req.headers['x-session-id'];
+  
+  // Phir cookie check karo
+  if (!sessionId) {
+    sessionId = req.cookies?.sessionId;
+  }
+  
+  // Agar kuch nahi mila toh naya banao
   if (!sessionId) {
     sessionId = uuidv4();
-    res.cookie("sessionId", sessionId, {
-      httpOnly: true,
-      maxAge: 30 * 24 * 60 * 60 * 1000,
-      secure: true,        // ✅ always true
-      sameSite: "none",    // ✅ cross domain allow karo
-    });
   }
+
+  // Cookie set karo (same-site none for cross domain)
+  res.cookie("sessionId", sessionId, {
+    httpOnly: true,
+    maxAge: 30 * 24 * 60 * 60 * 1000,
+    secure: true,
+    sameSite: "none",
+  });
+
   return sessionId;
 };
 
@@ -32,7 +44,6 @@ export const getCart = async (req, res) => {
 
     const { condition, param } = buildCartCondition(userId, sessionId);
 
-    // FIXED: Simplified query without ambiguous aliases
     const query = `
       SELECT 
         cart.id, 
@@ -49,18 +60,17 @@ export const getCart = async (req, res) => {
 
     const [cartItems] = await db.query(query, [param]);
 
-    // Add full image URL for frontend
-    // ✅ NAYA — env variable use karo
-const itemsWithImages = cartItems.map(item => ({
-  ...item,
-  image_url: item.image
-    ? item.image.startsWith('http')
-      ? item.image  // Cloudinary URL already complete hai
-      : `${process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL}/${item.image.startsWith('uploads/') ? '' : 'uploads/'}${item.image}`
-    : null
-}));
+    const itemsWithImages = cartItems.map(item => ({
+      ...item,
+      image_url: item.image
+        ? item.image.startsWith('http')
+          ? item.image
+          : `${process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL}/${item.image.startsWith('uploads/') ? '' : 'uploads/'}${item.image}`
+        : null
+    }));
 
-    res.json({ success: true, items: itemsWithImages });
+    // ✅ sessionId bhi return karo taake frontend save kar sake
+    res.json({ success: true, items: itemsWithImages, sessionId });
   } catch (error) {
     console.error('GetCart Error:', error);
     res.status(500).json({ success: false, message: "Failed to fetch cart" });
@@ -78,7 +88,6 @@ export const addToCart = async (req, res) => {
     const userId = req.user?.id;
     const sessionId = getSessionId(req, res);
 
-    // Check product exists
     const [product] = await db.query("SELECT id, name FROM products WHERE id = ?", [productId]);
     if (!product.length) {
       return res.status(404).json({ success: false, message: "Product not found" });
@@ -86,8 +95,6 @@ export const addToCart = async (req, res) => {
 
     const { condition, param } = buildCartCondition(userId, sessionId);
 
-    // FIXED: Simplified query - removed alias 'c.'
-    // Check if already in cart
     const [existingItem] = await db.query(
       `SELECT id, quantity FROM cart WHERE ${condition} AND product_id = ?`,
       [param, productId]
@@ -100,6 +107,7 @@ export const addToCart = async (req, res) => {
         success: true, 
         message: "Cart updated", 
         productName: product[0].name,
+        sessionId, // ✅ return karo
         cartItem: {
           id: existingItem[0].id,
           product_id: productId,
@@ -108,7 +116,6 @@ export const addToCart = async (req, res) => {
       });
     }
 
-    // Insert new item
     const insertQuery = `
       INSERT INTO cart (${userId ? 'user_id' : 'session_id'}, product_id, quantity) 
       VALUES (?, ?, ?)
@@ -119,6 +126,7 @@ export const addToCart = async (req, res) => {
       success: true, 
       message: "Item added", 
       productName: product[0].name,
+      sessionId, // ✅ return karo
       cartItem: {
         id: result.insertId,
         product_id: productId,
@@ -150,8 +158,6 @@ export const updateCartItem = async (req, res) => {
     const sessionId = getSessionId(req, res);
     const { condition, param } = buildCartCondition(userId, sessionId);
 
-    // Verify item belongs to user/session
-    // FIXED: Simplified query
     const [item] = await db.query(
       `SELECT id FROM cart WHERE id = ? AND ${condition}`,
       [id, param]
@@ -178,7 +184,6 @@ export const removeCartItem = async (req, res) => {
     const sessionId = getSessionId(req, res);
     const { condition, param } = buildCartCondition(userId, sessionId);
 
-    // Verify item belongs to user/session
     const [item] = await db.query(
       `SELECT id FROM cart WHERE id = ? AND ${condition}`,
       [id, param]
@@ -211,17 +216,16 @@ export const clearCart = async (req, res) => {
   }
 };
 
-// MERGE GUEST CART TO USER CART (for after login)
+// MERGE GUEST CART TO USER CART (after login)
 export const mergeGuestCart = async (req, res) => {
   try {
     const userId = req.user.id;
-    const sessionId = req.cookies?.sessionId;
+    const sessionId = req.cookies?.sessionId || req.headers['x-session-id'];
 
     if (!sessionId) {
       return res.json({ success: true, message: "No guest cart to merge" });
     }
 
-    // Get guest cart items
     const [guestItems] = await db.query(
       "SELECT product_id, quantity FROM cart WHERE session_id = ?",
       [sessionId]
@@ -231,23 +235,19 @@ export const mergeGuestCart = async (req, res) => {
       return res.json({ success: true, message: "No guest cart items" });
     }
 
-    // For each guest item, merge with user cart
     for (const guestItem of guestItems) {
-      // Check if user already has this item
       const [userItem] = await db.query(
         "SELECT id, quantity FROM cart WHERE user_id = ? AND product_id = ?",
         [userId, guestItem.product_id]
       );
 
       if (userItem.length > 0) {
-        // Update quantity
         const newQuantity = userItem[0].quantity + guestItem.quantity;
         await db.query(
           "UPDATE cart SET quantity = ? WHERE id = ?",
           [newQuantity, userItem[0].id]
         );
       } else {
-        // Insert new item for user
         await db.query(
           "INSERT INTO cart (user_id, product_id, quantity) VALUES (?, ?, ?)",
           [userId, guestItem.product_id, guestItem.quantity]
@@ -255,9 +255,7 @@ export const mergeGuestCart = async (req, res) => {
       }
     }
 
-    // Delete guest cart
     await db.query("DELETE FROM cart WHERE session_id = ?", [sessionId]);
-
     res.json({ success: true, message: "Cart merged successfully" });
   } catch (error) {
     console.error('MergeCart Error:', error);
