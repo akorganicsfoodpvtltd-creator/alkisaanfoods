@@ -50,12 +50,15 @@ export const getCart = async (req, res) => {
     const [cartItems] = await db.query(query, [param]);
 
     // Add full image URL for frontend
-    const itemsWithImages = cartItems.map(item => ({
-      ...item,
-      image_url: item.image 
-        ? `http://localhost:5000/${item.image.startsWith('uploads/') ? '' : 'uploads/'}${item.image}`
-        : null
-    }));
+    // ✅ NAYA — env variable use karo
+const itemsWithImages = cartItems.map(item => ({
+  ...item,
+  image_url: item.image
+    ? item.image.startsWith('http')
+      ? item.image  // Cloudinary URL already complete hai
+      : `${process.env.BACKEND_URL || process.env.NEXT_PUBLIC_API_URL}/${item.image.startsWith('uploads/') ? '' : 'uploads/'}${item.image}`
+    : null
+}));
 
     res.json({ success: true, items: itemsWithImages });
   } catch (error) {
