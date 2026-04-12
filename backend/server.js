@@ -16,6 +16,7 @@ import emailRouter from './routes/email.js';
 import "./config/passport.js";
 
 dotenv.config();
+
 const app = express();
 
 // MIDDLEWARE
@@ -26,8 +27,9 @@ app.use(cors({
   origin: [
     'https://alkissanfoods.com',
     'https://www.alkissanfoods.com',
-    'https://alkisaanfoods-gtsr.vercel.app',  // ✅ vercel URL
+    'https://alkisaanfoods-gtsr.vercel.app',
     'https://www.alkisaanfoods-gtsr.vercel.app',
+    'https://alkisaanfoods-production-34db.up.railway.app', // ✅ Railway URL added
     'http://localhost:3000',
     'http://localhost:3001',
   ],
@@ -36,7 +38,7 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
 }));
 
-// ✅ NAYA
+// ✅ SESSION — sirf ek baar (duplicate hata diya)
 app.use(session({
   secret: process.env.JWT_SECRET || "alkissan_secret",
   resave: false,
@@ -47,15 +49,6 @@ app.use(session({
     sameSite: 'none',  // ✅ cross-domain ke liye
     httpOnly: true
   }
-}));
-
-
-// SESSION SETUP
-app.use(session({
-  secret: process.env.JWT_SECRET || "alkissan_secret",
-  resave: false,
-  saveUninitialized: false,
-  cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 }
 }));
 
 // PASSPORT
@@ -92,7 +85,7 @@ initDatabase().then(() => {
   console.log("Database initialized");
 });
 
-// START SERVER — sirf ek baar
+// START SERVER
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on port ${PORT}`);
