@@ -4,6 +4,17 @@ import { useRouter } from "next/navigation";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://alkisaanfoods-production-34db.up.railway.app";
 
+// ✅ sessionId localStorage mein store karo (cross-domain ke liye)
+const getOrCreateSessionId = () => {
+  if (typeof window === "undefined") return null;
+  let sessionId = localStorage.getItem("cartSessionId");
+  if (!sessionId) {
+    sessionId = crypto.randomUUID();
+    localStorage.setItem("cartSessionId", sessionId);
+  }
+  return sessionId;
+};
+
 export default function ProductsSection() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -13,12 +24,14 @@ export default function ProductsSection() {
   const [buyingNow, setBuyingNow] = useState(null);
   const router = useRouter();
 
-  // ✅ Token header helper
+  // ✅ Har request mein token + sessionId bhejo
   const getAuthHeaders = () => {
     const token = typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
+    const sessionId = getOrCreateSessionId();
     return {
       "Content-Type": "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(sessionId ? { "x-session-id": sessionId } : {}),
     };
   };
 
@@ -33,7 +46,6 @@ export default function ProductsSection() {
     return 999;
   };
 
-  // ✅ Products fetch
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -51,7 +63,6 @@ export default function ProductsSection() {
     fetchProducts();
   }, []);
 
-  // ✅ Cart fetch — token + credentials dono
   useEffect(() => {
     const fetchCart = async () => {
       try {
@@ -60,8 +71,10 @@ export default function ProductsSection() {
           credentials: "include",
           headers: getAuthHeaders(),
         });
-        if (!res.ok) return; // 401 ya koi error — cart empty rehne do
+        if (!res.ok) return;
         const data = await res.json();
+        // ✅ Server se aaya sessionId save karo
+        if (data.sessionId) localStorage.setItem("cartSessionId", data.sessionId);
         if (data.success) setCartItems(data.items || []);
       } catch (err) {
         console.error("Failed to fetch cart:", err);
@@ -70,7 +83,6 @@ export default function ProductsSection() {
     fetchCart();
   }, []);
 
-  // ✅ Cart item remove event listener
   useEffect(() => {
     const handleEnableAddToCart = (event) => {
       const productId = event.detail?.productId;
@@ -84,7 +96,6 @@ export default function ProductsSection() {
 
   const isInCart = (productId) => cartItems.some(item => item.product_id === productId);
 
-  // ✅ Add to Cart
   const addToCart = async (product) => {
     setAddingToCart(product.id);
     try {
@@ -95,6 +106,9 @@ export default function ProductsSection() {
         body: JSON.stringify({ productId: product.id, quantity: 1 }),
       });
       const data = await res.json();
+
+      // ✅ Server se aaya sessionId save karo
+      if (data.sessionId) localStorage.setItem("cartSessionId", data.sessionId);
 
       if (data.success) {
         setCartItems((prev) => {
@@ -139,7 +153,6 @@ export default function ProductsSection() {
     }
   };
 
-  // ✅ Buy Now
   const handleBuyNow = async (product) => {
     setBuyingNow(product.id);
     try {
@@ -150,6 +163,8 @@ export default function ProductsSection() {
         body: JSON.stringify({ productId: product.id, quantity: 1 }),
       });
       const data = await res.json();
+
+      if (data.sessionId) localStorage.setItem("cartSessionId", data.sessionId);
 
       if (data.success) {
         setCartItems((prev) => {
