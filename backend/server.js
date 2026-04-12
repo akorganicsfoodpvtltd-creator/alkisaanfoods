@@ -48,7 +48,7 @@ app.use(session({
     httpOnly: true
   }
 }));
-Deploy karo aur test karo! Agar phir bhi issue ho toh browser Network tab mein cart request ka exact error message paste karo. 🎯
+
 
 // SESSION SETUP
 app.use(session({
