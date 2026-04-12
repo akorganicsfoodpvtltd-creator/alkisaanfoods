@@ -1,16 +1,16 @@
 import db from "../config/db.js";
 import { v4 as uuidv4 } from "uuid";
 
-// Helper: get or create sessionId
+// ✅ NAYA — cross domain kaam karega
 const getSessionId = (req, res) => {
-  let sessionId = req.cookies?.sessionId; // Added optional chaining
+  let sessionId = req.cookies?.sessionId;
   if (!sessionId) {
     sessionId = uuidv4();
     res.cookie("sessionId", sessionId, {
       httpOnly: true,
       maxAge: 30 * 24 * 60 * 60 * 1000,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      secure: true,        // ✅ always true
+      sameSite: "none",    // ✅ cross domain allow karo
     });
   }
   return sessionId;
