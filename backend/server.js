@@ -26,11 +26,39 @@ app.use(cors({
   origin: [
     'https://alkissanfoods.com',
     'https://www.alkissanfoods.com',
-    "https://alkisaanfoods-gtsr.vercel.app",
-    'http://localhost:3000'
-  ],                    // ← yahan comma tha missing
+    'https://alkisaanfoods-gtsr.vercel.app',  // ✅ vercel URL
+    'https://www.alkisaanfoods-gtsr.vercel.app',
+    'http://localhost:3000',
+    'http://localhost:3001',
+  ],
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
 }));
+
+Aur session cookie cross-domain fix karo:
+javascript// ❌ PURANA
+app.use(session({
+  secret: process.env.JWT_SECRET || "alkissan_secret",
+  resave: false,
+  saveUninitialized: false,
+  cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 }  // ← secure/sameSite missing
+}));
+
+// ✅ NAYA
+app.use(session({
+  secret: process.env.JWT_SECRET || "alkissan_secret",
+  resave: false,
+  saveUninitialized: false,
+  cookie: { 
+    maxAge: 30 * 24 * 60 * 60 * 1000,
+    secure: true,      // ✅ HTTPS ke liye
+    sameSite: 'none',  // ✅ cross-domain ke liye
+    httpOnly: true
+  }
+}));
+
+Deploy karo aur test karo! Agar phir bhi issue ho toh browser Network tab mein cart request ka exact error message paste karo. 🎯
 
 // SESSION SETUP
 app.use(session({
