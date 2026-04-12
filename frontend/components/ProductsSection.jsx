@@ -2,6 +2,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://alkisaanfoods-production-34db.up.railway.app";
+
 export default function ProductsSection() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -11,7 +13,7 @@ export default function ProductsSection() {
   const [buyingNow, setBuyingNow] = useState(null);
   const router = useRouter();
 
-  // ✅ Helper — token header banao
+  // ✅ Token header helper
   const getAuthHeaders = () => {
     const token = typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
     return {
@@ -31,10 +33,11 @@ export default function ProductsSection() {
     return 999;
   };
 
+  // ✅ Products fetch
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/products`);
+        const res = await fetch(`${API_URL}/api/products`);
         const data = await res.json();
         let productsList = data.products || [];
         productsList.sort((a, b) => extractWeight(a) - extractWeight(b));
@@ -48,14 +51,16 @@ export default function ProductsSection() {
     fetchProducts();
   }, []);
 
-  // ✅ Cart fetch mein bhi token bhejo
+  // ✅ Cart fetch — token + credentials dono
   useEffect(() => {
     const fetchCart = async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart`, {
+        const res = await fetch(`${API_URL}/api/cart`, {
+          method: "GET",
           credentials: "include",
           headers: getAuthHeaders(),
         });
+        if (!res.ok) return; // 401 ya koi error — cart empty rehne do
         const data = await res.json();
         if (data.success) setCartItems(data.items || []);
       } catch (err) {
@@ -65,6 +70,7 @@ export default function ProductsSection() {
     fetchCart();
   }, []);
 
+  // ✅ Cart item remove event listener
   useEffect(() => {
     const handleEnableAddToCart = (event) => {
       const productId = event.detail?.productId;
@@ -78,11 +84,11 @@ export default function ProductsSection() {
 
   const isInCart = (productId) => cartItems.some(item => item.product_id === productId);
 
+  // ✅ Add to Cart
   const addToCart = async (product) => {
     setAddingToCart(product.id);
     try {
-      // ✅ FIX: Token header add kiya
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart`, {
+      const res = await fetch(`${API_URL}/api/cart`, {
         method: "POST",
         headers: getAuthHeaders(),
         credentials: "include",
@@ -118,7 +124,6 @@ export default function ProductsSection() {
         }));
 
       } else {
-        // ✅ FIX: Login nahi hai to login modal open karo
         if (res.status === 401) {
           window.dispatchEvent(new CustomEvent("openLoginModal"));
           alert("Please login first to add items to cart");
@@ -134,11 +139,11 @@ export default function ProductsSection() {
     }
   };
 
+  // ✅ Buy Now
   const handleBuyNow = async (product) => {
     setBuyingNow(product.id);
     try {
-      // ✅ FIX: Token header add kiya
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart`, {
+      const res = await fetch(`${API_URL}/api/cart`, {
         method: "POST",
         headers: getAuthHeaders(),
         credentials: "include",
@@ -171,7 +176,6 @@ export default function ProductsSection() {
         router.push("/checkout");
 
       } else {
-        // ✅ FIX: Login nahi hai to message dikhao
         if (res.status === 401) {
           window.dispatchEvent(new CustomEvent("openLoginModal"));
           alert("Please login first to purchase");
