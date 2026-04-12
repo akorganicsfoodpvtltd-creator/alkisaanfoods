@@ -36,15 +36,6 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
 }));
 
-Aur session cookie cross-domain fix karo:
-javascript// ❌ PURANA
-app.use(session({
-  secret: process.env.JWT_SECRET || "alkissan_secret",
-  resave: false,
-  saveUninitialized: false,
-  cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 }  // ← secure/sameSite missing
-}));
-
 // ✅ NAYA
 app.use(session({
   secret: process.env.JWT_SECRET || "alkissan_secret",
@@ -57,7 +48,6 @@ app.use(session({
     httpOnly: true
   }
 }));
-
 Deploy karo aur test karo! Agar phir bhi issue ho toh browser Network tab mein cart request ka exact error message paste karo. 🎯
 
 // SESSION SETUP
