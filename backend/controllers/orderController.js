@@ -191,7 +191,8 @@ export const createOrder = async (req, res) => {
     }
     
     // Extract user_id from session or use guest
-    const user_id = req.user?.id || 'guest';
+  // ✅ Use null instead of 'guest'
+const user_id = req.user?.id || null;
     
     // Generate sequential order ID in format ORD#001
     const order_id = await getNextOrderId();
