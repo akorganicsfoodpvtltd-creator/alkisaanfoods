@@ -468,24 +468,38 @@ export default function MainHeader() {
     return numPrice.toFixed(2);
   };
 
-  const fetchCart = useCallback(async () => {
-    try {
-      setCartLoading(true);
-      const res = await axios.get("/api/cart", { withCredentials: true });
-      let items = [];
-      if (res.data?.items) items = res.data.items;
-      else if (Array.isArray(res.data)) items = res.data;
-      else if (res.data?.cart?.items) items = res.data.cart.items;
-      setCart(items);
-      setCartCount(items.reduce((total, item) => total + (item.quantity || 1), 0));
-    } catch (error) {
-      console.error("Error fetching cart:", error);
-      setCart([]);
-      setCartCount(0);
-    } finally {
-      setCartLoading(false);
-    }
-  }, []);
+ const fetchCart = useCallback(async () => {
+  try {
+    setCartLoading(true);
+    const token = localStorage.getItem('authToken');
+    const sessionId = localStorage.getItem('cartSessionId');
+    
+    const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/cart`, { 
+      withCredentials: true,
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(sessionId ? { 'x-session-id': sessionId } : {}),
+      }
+    });
+    
+    let items = [];
+    if (res.data?.items) items = res.data.items;
+    else if (Array.isArray(res.data)) items = res.data;
+    else if (res.data?.cart?.items) items = res.data.cart.items;
+    
+    // ✅ sessionId save karo
+    if (res.data?.sessionId) localStorage.setItem('cartSessionId', res.data.sessionId);
+    
+    setCart(items);
+    setCartCount(items.reduce((total, item) => total + (item.quantity || 1), 0));
+  } catch (error) {
+    console.error("Error fetching cart:", error);
+    setCart([]);
+    setCartCount(0);
+  } finally {
+    setCartLoading(false);
+  }
+}, []);
 
   const fetchUser = useCallback(async () => {
     try {
