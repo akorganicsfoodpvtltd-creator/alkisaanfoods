@@ -711,8 +711,8 @@ export default function MainHeader() {
     const sessionId = localStorage.getItem('cartSessionId');
 
     await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart/${itemId}`, {
-      method: "DELETE",
-      credentials: "include",
+      method: 'DELETE',
+      credentials: 'include',
       headers: {
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...(sessionId ? { 'x-session-id': sessionId } : {}),
