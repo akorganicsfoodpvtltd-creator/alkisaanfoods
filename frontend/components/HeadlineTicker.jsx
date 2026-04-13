@@ -218,7 +218,7 @@ export default function HeadlineTicker() {
           100% { transform: translateX(-33.33%); }
         }
         .animate-scroll-extremely-slow {
-          animation: scroll-extremely-slow 60s linear infinite;
+          animation: scroll-extremely-slow 120s linear infinite;
           display: flex;
           width: fit-content;
         }
@@ -248,12 +248,12 @@ export default function HeadlineTicker() {
         }
         @media (max-width: 768px) {
           .animate-scroll-extremely-slow {
-            animation: scroll-extremely-slow 50s linear infinite;
+            animation: scroll-extremely-slow 100s linear infinite;
           }
         }
         @media (max-width: 480px) {
           .animate-scroll-extremely-slow {
-            animation: scroll-extremely-slow 40s linear infinite;
+            animation: scroll-extremely-slow 80s linear infinite;
           }
         }
       `}</style>
