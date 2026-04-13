@@ -2,6 +2,9 @@
 import { useState } from "react";
 import { FiUser, FiMail, FiMessageSquare, FiSend, FiCheckCircle } from "react-icons/fi";
 
+// ✅ FIX: Hardcoded fallback taake browser mein bhi kaam kare
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://alkisaanfoods-production-34db.up.railway.app";
+
 export default function ContactSection() {
   const [formData, setFormData] = useState({
     name: "",
@@ -81,8 +84,7 @@ export default function ContactSection() {
     setSubmitError("");
 
     try {
-      // ✅ FIX: localhost hata ke env variable use karo
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/contact`, {
+      const response = await fetch(`${API_URL}/api/contact`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
@@ -124,9 +126,7 @@ export default function ContactSection() {
           <div className="text-center mb-16">
             <div className="inline-flex items-center justify-center gap-2 mb-4">
               <div className="h-1 w-10 bg-green-500 rounded-full"></div>
-              <span className="text-green-600 font-semibold text-sm uppercase tracking-wider">
-                Get In Touch
-              </span>
+              <span className="text-green-600 font-semibold text-sm uppercase tracking-wider">Get In Touch</span>
               <div className="h-1 w-10 bg-green-500 rounded-full"></div>
             </div>
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
@@ -206,10 +206,7 @@ export default function ContactSection() {
                       <p className="text-green-600 font-medium">✓ Your message has been sent to our team</p>
                       <p className="text-gray-500 text-sm">We'll contact you soon.</p>
                     </div>
-                    <button
-                      onClick={() => setIsSubmitted(false)}
-                      className="inline-flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-green-700 transition-colors"
-                    >
+                    <button onClick={() => setIsSubmitted(false)} className="inline-flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-green-700 transition-colors">
                       Send Another Message
                     </button>
                   </div>
@@ -217,72 +214,35 @@ export default function ContactSection() {
                   <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Your Name <span className="text-red-500">*</span>
-                        </label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Your Name <span className="text-red-500">*</span></label>
                         <div className="relative">
                           <FiUser className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                          <input
-                            type="text"
-                            name="name"
-                            value={formData.name}
-                            onChange={handleChange}
-                            className={`w-full pl-12 pr-4 py-3.5 border ${errors.name ? "border-red-300" : "border-gray-300"} rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all bg-white text-gray-900`}
-                            placeholder="Full Name"
-                          />
+                          <input type="text" name="name" value={formData.name} onChange={handleChange} className={`w-full pl-12 pr-4 py-3.5 border ${errors.name ? "border-red-300" : "border-gray-300"} rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all bg-white text-gray-900`} placeholder="Full Name" />
                         </div>
                         {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Email Address <span className="text-red-500">*</span>
-                        </label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Email Address <span className="text-red-500">*</span></label>
                         <div className="relative">
                           <FiMail className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                          <input
-                            type="email"
-                            name="email"
-                            value={formData.email}
-                            onChange={handleChange}
-                            className={`w-full pl-12 pr-4 py-3.5 border ${errors.email ? "border-red-300" : "border-gray-300"} rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all bg-white text-gray-900`}
-                            placeholder="Your Email"
-                          />
+                          <input type="email" name="email" value={formData.email} onChange={handleChange} className={`w-full pl-12 pr-4 py-3.5 border ${errors.email ? "border-red-300" : "border-gray-300"} rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all bg-white text-gray-900`} placeholder="Your Email" />
                         </div>
                         {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
                       </div>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Subject <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        name="subject"
-                        value={formData.subject}
-                        onChange={handleChange}
-                        className={`w-full px-4 py-3.5 border ${errors.subject ? "border-red-300" : "border-gray-300"} rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all bg-white text-gray-900`}
-                        placeholder="How can we help you?"
-                      />
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Subject <span className="text-red-500">*</span></label>
+                      <input type="text" name="subject" value={formData.subject} onChange={handleChange} className={`w-full px-4 py-3.5 border ${errors.subject ? "border-red-300" : "border-gray-300"} rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all bg-white text-gray-900`} placeholder="How can we help you?" />
                       {errors.subject && <p className="mt-1 text-sm text-red-600">{errors.subject}</p>}
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Your Message <span className="text-red-500">*</span>
-                      </label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Your Message <span className="text-red-500">*</span></label>
                       <div className="relative">
                         <FiMessageSquare className="absolute left-4 top-4 text-gray-400" />
-                        <textarea
-                          name="message"
-                          value={formData.message}
-                          onChange={handleChange}
-                          rows={5}
-                          maxLength={500}
-                          className={`w-full pl-12 pr-4 py-3.5 border ${errors.message ? "border-red-300" : "border-gray-300"} rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all resize-none bg-white text-gray-900`}
-                          placeholder="Tell us about your inquiry..."
-                        />
+                        <textarea name="message" value={formData.message} onChange={handleChange} rows={5} maxLength={500} className={`w-full pl-12 pr-4 py-3.5 border ${errors.message ? "border-red-300" : "border-gray-300"} rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all resize-none bg-white text-gray-900`} placeholder="Tell us about your inquiry..." />
                       </div>
                       <div className="flex justify-between items-center mt-1">
                         {errors.message ? (
@@ -290,9 +250,7 @@ export default function ContactSection() {
                         ) : (
                           <p className="text-xs text-gray-500">Please include relevant details</p>
                         )}
-                        <span className={`text-xs ${formData.message.length < 10 ? "text-gray-400" : "text-green-600"}`}>
-                          {formData.message.length}/500
-                        </span>
+                        <span className={`text-xs ${formData.message.length < 10 ? "text-gray-400" : "text-green-600"}`}>{formData.message.length}/500</span>
                       </div>
                     </div>
 
@@ -305,29 +263,17 @@ export default function ContactSection() {
                           <div>
                             <p className="text-red-600 text-sm font-medium mb-1">Unable to send message</p>
                             <p className="text-red-500 text-sm">{submitError}</p>
-                            <p className="text-gray-600 text-xs mt-2">
-                              Contact us directly at <strong>+923004809083</strong> or <strong>akorganicsfoodpvtltd@gmail.com</strong>
-                            </p>
+                            <p className="text-gray-600 text-xs mt-2">Contact us directly at <strong>+923004809083</strong> or <strong>akorganicsfoodpvtltd@gmail.com</strong></p>
                           </div>
                         </div>
                       </div>
                     )}
 
-                    <button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white py-4 rounded-xl font-semibold hover:from-green-700 hover:to-emerald-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
+                    <button type="submit" disabled={isSubmitting} className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white py-4 rounded-xl font-semibold hover:from-green-700 hover:to-emerald-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed">
                       {isSubmitting ? (
-                        <>
-                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                          Sending Message...
-                        </>
+                        <><div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>Sending Message...</>
                       ) : (
-                        <>
-                          <FiSend className="w-5 h-5" />
-                          Send Message
-                        </>
+                        <><FiSend className="w-5 h-5" />Send Message</>
                       )}
                     </button>
 
