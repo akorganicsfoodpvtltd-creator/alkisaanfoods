@@ -97,6 +97,7 @@ export default function ProductsSection() {
   const isInCart = (productId) => cartItems.some(item => item.product_id === productId);
 
   const addToCart = async (product) => {
+    console.warn('Adding product:', product.id, product.name);
     setAddingToCart(product.id);
     try {
       const res = await fetch(`${API_URL}/api/cart`, {
