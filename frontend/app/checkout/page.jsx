@@ -313,25 +313,7 @@ export default function CheckoutPage() {
                 )}
               </div>
 
-              <div className="bg-gray-50 rounded-xl p-6 mb-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Order Summary</h3>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Items ({cart.length})</span>
-                    <span className="font-medium">PKR {subtotal.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Shipping</span>
-                    <span className="text-green-600 font-semibold">FREE</span>
-                  </div>
-                  <div className="pt-2 border-t border-gray-200">
-                    <div className="flex justify-between items-center pt-2">
-                      <span className="font-bold text-lg">Total</span>
-                      <span className="font-bold text-lg text-[rgba(23,47,132,0.89)]">PKR {total.toFixed(2)}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+        
 
               <div className="text-center space-y-4">
                 <button onClick={() => router.push("/")} className="w-full bg-gradient-to-r from-green-600 to-[rgba(23,47,132,0.89)] text-white py-4 rounded-xl font-bold hover:shadow-lg transition-all transform hover:scale-[1.02] active:scale-[0.98]">
