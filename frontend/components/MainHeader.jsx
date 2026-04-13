@@ -699,42 +699,67 @@ export default function MainHeader() {
     setTimeout(() => { setShowCart(false); setIsClosingCart(false); }, 300);
   };
 
-  const handleRemoveFromCart = async (itemId) => {
-    try {
-      const itemToRemove = cart.find(item => item._id === itemId || item.id === itemId);
-      if (itemToRemove) {
-        const quantityToRemove = itemToRemove.quantity || 1;
-        setCartCount(prev => Math.max(0, prev - quantityToRemove));
-        setCart(prev => prev.filter(item => item._id !== itemId && item.id !== itemId));
-      }
-      await axios.delete(`/api/cart/${itemId}`, { withCredentials: true });
-      setCartMessage({ type: 'success', text: 'Item removed from cart!', icon: '🗑️' });
-      const productId = itemToRemove?.product_id || itemToRemove?.product?.id;
-      if (productId) window.dispatchEvent(new CustomEvent('enableAddToCart', { detail: { productId } }));
-    } catch (error) {
-      console.error("Failed to remove item:", error);
-      setCartMessage({ type: 'error', text: 'Failed to remove item. Please try again.', icon: '❌' });
-      fetchCart();
+ const handleRemoveFromCart = async (itemId) => {
+  try {
+    const itemToRemove = cart.find(item => item.id === itemId || item._id === itemId);
+    if (itemToRemove) {
+      setCartCount(prev => Math.max(0, prev - (itemToRemove.quantity || 1)));
+      setCart(prev => prev.filter(item => item.id !== itemId && item._id !== itemId));
     }
-  };
 
-  const handleUpdateQuantity = async (itemId, newQuantity) => {
-    if (newQuantity < 1) { handleRemoveFromCart(itemId); return; }
-    try {
-      setIsUpdatingQuantity(itemId);
-      const updatedCart = cart.map(item => (item._id === itemId || item.id === itemId) ? { ...item, quantity: newQuantity } : item);
-      setCart(updatedCart);
-      setCartCount(updatedCart.reduce((total, item) => total + (item.quantity || 1), 0));
-      await axios.put(`/api/cart/${itemId}`, { quantity: newQuantity }, { withCredentials: true });
-      setCartMessage({ type: 'success', text: 'Quantity updated!', icon: '✅' });
-    } catch (error) {
-      console.error("Failed to update quantity:", error);
-      setCartMessage({ type: 'error', text: 'Failed to update quantity. Please try again.', icon: '❌' });
-      fetchCart();
-    } finally {
-      setIsUpdatingQuantity(null);
-    }
-  };
+    const token = localStorage.getItem('authToken');
+    const sessionId = localStorage.getItem('cartSessionId');
+
+    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart/${itemId}`, {
+      method: "DELETE",
+      credentials: "include",
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(sessionId ? { 'x-session-id': sessionId } : {}),
+      }
+    });
+
+    setCartMessage({ type: 'success', text: 'Item removed!', icon: '🗑️' });
+    const productId = itemToRemove?.product_id;
+    if (productId) window.dispatchEvent(new CustomEvent('enableAddToCart', { detail: { productId } }));
+
+  } catch (error) {
+    console.error("Failed to remove item:", error);
+    setCartMessage({ type: 'error', text: 'Failed to remove item.', icon: '❌' });
+    fetchCart();
+  }
+};
+ const handleUpdateQuantity = async (itemId, newQuantity) => {
+  if (newQuantity < 1) { handleRemoveFromCart(itemId); return; }
+  try {
+    setIsUpdatingQuantity(itemId);
+    const updatedCart = cart.map(item => (item._id === itemId || item.id === itemId) ? { ...item, quantity: newQuantity } : item);
+    setCart(updatedCart);
+    setCartCount(updatedCart.reduce((total, item) => total + (item.quantity || 1), 0));
+
+    const token = localStorage.getItem('authToken');
+    const sessionId = localStorage.getItem('cartSessionId');
+
+    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart/${itemId}`, {
+      method: 'PUT',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(sessionId ? { 'x-session-id': sessionId } : {}),
+      },
+      body: JSON.stringify({ quantity: newQuantity })
+    });
+
+    setCartMessage({ type: 'success', text: 'Quantity updated!', icon: '✅' });
+  } catch (error) {
+    console.error("Failed to update quantity:", error);
+    setCartMessage({ type: 'error', text: 'Failed to update quantity. Please try again.', icon: '❌' });
+    fetchCart();
+  } finally {
+    setIsUpdatingQuantity(null);
+  }
+};
 
   const getProductImageUrl = (product) => {
     if (!product) return '/placeholder.jpg';
