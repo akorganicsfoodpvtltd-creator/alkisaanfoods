@@ -23,7 +23,7 @@ export default function StoresPage() {
     return `${process.env.NEXT_PUBLIC_API_URL}/uploads/${storeImage}`;
   };
 
-  // ✅ Sort groups A-Z by store name
+  // Sort groups A-Z by store name (ignoring Al/The/A prefix)
   const sortGroupsAZ = (groups) => {
     return Object.values(groups).sort((a, b) => {
       const nameA = a.storeName.replace(/^(Al|The|A)\s+/i, '').toLowerCase().trim();
@@ -41,7 +41,6 @@ export default function StoresPage() {
         const storesArray = Array.isArray(data) ? data : [];
         setAllStores(storesArray);
 
-        // ✅ Fix: normalize city names to avoid duplicates (trim + consistent casing)
         const citySet = new Map();
         storesArray.forEach(store => {
           const raw = (store.City || store.city || '').trim();
@@ -53,30 +52,19 @@ export default function StoresPage() {
         const uniqueCities = [...citySet.values()].sort((a, b) => a.localeCompare(b));
         setCities(["All", ...uniqueCities]);
 
-        // Group stores by Store Name + City
         const grouped = storesArray.reduce((acc, store) => {
           const storeName = (store["Store Name"] || store.store_name || '').trim();
           const city = (store.City || store.city || '').trim();
-
           if (!storeName || !city) return acc;
-
           const key = `${storeName.toLowerCase()}-${city.toLowerCase()}`;
-
           if (!acc[key]) {
-            acc[key] = {
-              storeName,
-              city,
-              storeImage: store.store_image,
-              branches: [],
-            };
+            acc[key] = { storeName, city, storeImage: store.store_image, branches: [] };
           }
-
           acc[key].branches.push({
             Branch: store.Branch || store.branch_name || "Main Branch",
             Address: store.Address || store.address || "",
             PhoneNumber: store["Phone Number"] || store.phone || "",
           });
-
           return acc;
         }, {});
 
@@ -86,7 +74,7 @@ export default function StoresPage() {
       })
       .catch((err) => {
         if (err.name !== "AbortError") {
-          console.error("❌ Failed to fetch stores:", err);
+          console.error("Failed to fetch stores:", err);
           setLoading(false);
         }
       });
@@ -94,7 +82,6 @@ export default function StoresPage() {
     return () => controller.abort();
   }, []);
 
-  // ✅ Filter + sort A-Z whenever city or grouped stores change
   useEffect(() => {
     if (selectedCity === "All") {
       setFilteredGroupedStores(groupedStores);
@@ -111,7 +98,6 @@ export default function StoresPage() {
 
   const getFallbackLogo = (storeName) => {
     if (!storeName || typeof storeName !== "string") return null;
-
     const logoMap = {
       "Al Rehman Mart": "/Al Rehman Mart.png",
       "Bajwa Shopping Mart": "/bajwa.jpeg",
@@ -137,23 +123,16 @@ export default function StoresPage() {
       "Umer Usama Shopping Mall": "/umermall.jpeg",
       "Heaven Mart": "/heaven mart.webp",
     };
-
     if (logoMap[storeName]) return logoMap[storeName];
-
     const storeLower = storeName.toLowerCase();
     for (const [key, path] of Object.entries(logoMap)) {
       if (storeLower.includes(key.toLowerCase())) return path;
     }
-
     return null;
   };
 
   const handleImageError = (storeName) => {
     setImageErrors((prev) => ({ ...prev, [storeName]: true }));
-  };
-
-  const handleCitySelect = (city) => {
-    setSelectedCity(city);
   };
 
   if (loading) return (
@@ -165,24 +144,20 @@ export default function StoresPage() {
     </div>
   );
 
-  // ✅ A-Z sorted store groups
   const storeGroups = sortGroupsAZ(filteredGroupedStores);
-  const totalBranchesDisplayed = storeGroups.reduce((sum, group) => sum + group.branches.length, 0);
 
   return (
-    // ✅ Force white background — not affected by dark mode or any theme
     <div style={{ backgroundColor: '#ffffff', minHeight: '100vh', color: '#1a1a1a' }}>
       <div className="px-4 py-8 max-w-7xl mx-auto">
 
         {/* Heading */}
-        <div className="text-center mb-8" style={{ backgroundColor: '#ffffff' }}>
+        <div className="text-center mb-8">
           <h1 className="text-4xl md:text-5xl font-bold text-green-800 mb-4">
             Al Kissan Products Available At These Stores
           </h1>
           <p className="text-gray-600 text-lg">
             Find our premium quality products at trusted retailers
           </p>
-
           <div className="mt-4 inline-flex items-center gap-2 bg-green-50 px-4 py-2 rounded-full border border-green-200">
             <span className="text-green-700 font-semibold">
               Total Stores: {allStores.length}
@@ -190,21 +165,19 @@ export default function StoresPage() {
           </div>
         </div>
 
-        {/* ✅ City Filter Buttons — deduplicated */}
+        {/* City Filter Buttons */}
         <div className="mb-10">
           <div className="flex flex-wrap justify-center gap-2 md:gap-3">
             {cities.map((city) => {
-              // ✅ Fixed count — normalize city comparison
               const storeCount = city === "All"
                 ? allStores.length
                 : allStores.filter(s =>
                     (s.City || s.city || '').trim().toLowerCase() === city.toLowerCase()
                   ).length;
-
               return (
                 <button
                   key={city}
-                  onClick={() => handleCitySelect(city)}
+                  onClick={() => setSelectedCity(city)}
                   className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
                     selectedCity === city
                       ? "bg-green-700 text-white shadow-md"
@@ -218,19 +191,9 @@ export default function StoresPage() {
           </div>
         </div>
 
-        {/* Results count */}
-        <div className="mb-8 text-center">
-          <p className="text-lg text-gray-700">
-            Showing <span className="font-bold text-green-700">{totalBranchesDisplayed}</span> store
-            {totalBranchesDisplayed !== 1 ? "s" : ""}
-            {selectedCity !== "All" && ` in ${selectedCity}`}
-            {" "}— sorted A to Z
-          </p>
-        </div>
-
-        {/* ✅ Stores List — A to Z */}
+        {/* Stores List — A to Z, no extra labels */}
         {storeGroups.length > 0 ? (
-          <div className="space-y-16" style={{ backgroundColor: '#ffffff' }}>
+          <div className="space-y-16">
             {storeGroups.map((storeGroup, index) => {
               const dbImageUrl = getStoreImageUrl(storeGroup.storeImage);
               const fallbackLogo = getFallbackLogo(storeGroup.storeName);
@@ -238,27 +201,18 @@ export default function StoresPage() {
               const hasImageError = imageErrors[storeGroup.storeName];
 
               return (
-                <div
-                  key={`${storeGroup.storeName}-${storeGroup.city}-${index}`}
-                  style={{ backgroundColor: '#ffffff' }}
-                >
+                <div key={`${storeGroup.storeName}-${storeGroup.city}-${index}`}>
                   <div className="md:grid md:grid-cols-12 gap-8 items-start">
 
                     {/* LEFT — Store Info */}
                     <div className="md:col-span-7 space-y-6">
-                      {/* ✅ A-Z index badge */}
-                      <div className="flex items-center gap-3">
-                        <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-green-700 text-white font-bold text-lg flex-shrink-0">
-                          {storeGroup.storeName.replace(/^(Al|The|A)\s+/i, '').charAt(0).toUpperCase()}
-                        </span>
-                        <div>
-                          <h2 className="text-3xl font-bold text-gray-800">{storeGroup.storeName}</h2>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="text-xl font-semibold text-gray-600">{storeGroup.city}</span>
-                            <span className="inline-block px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded">
-                              {storeGroup.branches.length} branch{storeGroup.branches.length !== 1 ? "es" : ""}
-                            </span>
-                          </div>
+                      <div>
+                        <h2 className="text-3xl font-bold text-gray-800">{storeGroup.storeName}</h2>
+                        <div className="flex items-center gap-2 mt-2">
+                          <span className="text-xl font-semibold text-gray-600">{storeGroup.city}</span>
+                          <span className="inline-block px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded">
+                            {storeGroup.branches.length} branch{storeGroup.branches.length !== 1 ? "es" : ""}
+                          </span>
                         </div>
                       </div>
 
@@ -284,7 +238,10 @@ export default function StoresPage() {
                     <div className="md:col-span-5 mt-8 md:mt-0 text-center">
                       <div className="relative inline-block">
                         <div className="absolute inset-0 bg-green-300 blur-lg opacity-30 rounded-full"></div>
-                        <div className="relative w-72 h-72 md:w-80 md:h-80 rounded-full bg-green-50 border-8 border-white shadow-xl overflow-hidden flex items-center justify-center" style={{ backgroundColor: '#f0fdf4' }}>
+                        <div
+                          className="relative w-72 h-72 md:w-80 md:h-80 rounded-full border-8 border-white shadow-xl overflow-hidden flex items-center justify-center"
+                          style={{ backgroundColor: '#f0fdf4' }}
+                        >
                           {imageSource && !hasImageError ? (
                             <Image
                               src={imageSource}
@@ -308,11 +265,8 @@ export default function StoresPage() {
                           )}
                         </div>
                       </div>
-
                       <p className="mt-6 text-gray-600">
-                        Visit{" "}
-                        <span className="font-semibold text-green-700">{storeGroup.storeName}</span>{" "}
-                        in {storeGroup.city}
+                        Visit <span className="font-semibold text-green-700">{storeGroup.storeName}</span> in {storeGroup.city}
                       </p>
                     </div>
                   </div>
@@ -327,17 +281,14 @@ export default function StoresPage() {
         ) : (
           <div className="text-center py-12">
             <p className="text-xl text-gray-600">
-              No stores found{selectedCity !== "All" ? ` in ${selectedCity}` : ""}. Try selecting a different city.
+              No stores found{selectedCity !== "All" ? ` in ${selectedCity}` : ""}.
             </p>
           </div>
         )}
       </div>
 
-      {/* ✅ Force white bg globally for this page — overrides dark mode */}
       <style>{`
-        body {
-          background-color: #ffffff !important;
-        }
+        body { background-color: #ffffff !important; }
       `}</style>
     </div>
   );
