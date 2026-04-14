@@ -1,29 +1,13 @@
 import express from 'express';
-import { Resend } from 'resend';
 
 const router = express.Router();
 
-const getResend = () => {
-  if (!process.env.RESEND_API_KEY) {
-    throw new Error('RESEND_API_KEY not configured');
-  }
-  return new Resend(process.env.RESEND_API_KEY);
-};
-
 // Test endpoint
 router.get('/test', async (req, res) => {
-  try {
-    if (!process.env.RESEND_API_KEY) {
-      return res.status(500).json({ success: false, message: 'RESEND_API_KEY not set in environment variables' });
-    }
-    res.json({
-      success: true,
-      message: 'Resend email service is configured',
-      timestamp: new Date().toISOString()
-    });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+  if (!process.env.RESEND_API_KEY) {
+    return res.status(500).json({ success: false, message: 'RESEND_API_KEY not set' });
   }
+  res.json({ success: true, message: 'Resend email service is configured', timestamp: new Date().toISOString() });
 });
 
 // Send order confirmation email
@@ -31,24 +15,16 @@ router.post('/', async (req, res) => {
   console.log('📧 Email API called at:', new Date().toISOString());
 
   try {
-    const {
-      to,
-      customerName,
-      orderId,
-      orderDate,
-      items,
-      shippingAddress,
-      phone,
-      totalAmount,
-      paymentMethod
-    } = req.body;
+    const { to, customerName, orderId, orderDate, items, shippingAddress, phone, totalAmount, paymentMethod } = req.body;
 
     if (!to || !to.includes('@')) {
       return res.status(400).json({ success: false, message: 'Valid recipient email is required' });
     }
-
     if (!customerName || !orderId) {
       return res.status(400).json({ success: false, message: 'Missing required fields' });
+    }
+    if (!process.env.RESEND_API_KEY) {
+      return res.status(500).json({ success: false, message: 'Email service not configured' });
     }
 
     const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -56,8 +32,7 @@ router.post('/', async (req, res) => {
     const emailHtml = `
       <!DOCTYPE html>
       <html>
-      <head>
-        <meta charset="utf-8">
+      <head><meta charset="utf-8">
         <style>
           body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
           .container { max-width: 600px; margin: 0 auto; padding: 20px; }
@@ -89,18 +64,9 @@ router.post('/', async (req, res) => {
                   <span>PKR ${(item.price * item.quantity).toFixed(2)}</span>
                 </div>
               `).join('')}
-              <div class="item-row">
-                <span>Subtotal</span>
-                <span>PKR ${subtotal.toFixed(2)}</span>
-              </div>
-              <div class="item-row">
-                <span>Shipping</span>
-                <span>FREE</span>
-              </div>
-              <div class="item-row total-row">
-                <span>Total Amount</span>
-                <span>PKR ${totalAmount.toFixed(2)}</span>
-              </div>
+              <div class="item-row"><span>Subtotal</span><span>PKR ${subtotal.toFixed(2)}</span></div>
+              <div class="item-row"><span>Shipping</span><span>FREE</span></div>
+              <div class="item-row total-row"><span>Total Amount</span><span>PKR ${totalAmount.toFixed(2)}</span></div>
             </div>
             <h3>Shipping Information</h3>
             <p><strong>Address:</strong> ${shippingAddress}</p>
@@ -108,8 +74,7 @@ router.post('/', async (req, res) => {
             <p><strong>Payment Method:</strong> ${paymentMethod}</p>
             <p>Questions? Contact us at akorganicsfoodpvtltd@gmail.com</p>
             <div class="footer">
-              <p>AK Organics Food Pvt Ltd</p>
-              <p>© ${new Date().getFullYear()} All rights reserved.</p>
+              <p>AK Organics Food Pvt Ltd &copy; ${new Date().getFullYear()}</p>
             </div>
           </div>
         </div>
@@ -117,22 +82,30 @@ router.post('/', async (req, res) => {
       </html>
     `;
 
-    const resend = getResend();
-    const { data, error } = await resend.emails.send({
-      from: 'AK Organics <onboarding@resend.dev>',
-      to: to,
-      subject: `Order Confirmation #${orderId} - AK Organics`,
-      html: emailHtml,
-      text: `Order Confirmation\n\nDear ${customerName},\n\nYour order ${orderId} has been confirmed.\n\nTotal: PKR ${totalAmount}\n\nThank you for choosing AK Organics!`
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: "AK Organics <onboarding@resend.dev>",
+        to: [to],
+        subject: `Order Confirmation #${orderId} - AK Organics`,
+        html: emailHtml,
+        text: `Order Confirmation\n\nDear ${customerName},\n\nYour order ${orderId} has been confirmed.\n\nTotal: PKR ${totalAmount}\n\nThank you for choosing AK Organics!`,
+      }),
     });
 
-    if (error) {
-      console.error('❌ Resend error:', error);
-      return res.status(500).json({ success: false, message: error.message });
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error("❌ Resend API error:", data);
+      return res.status(500).json({ success: false, message: data.message || "Failed to send email" });
     }
 
     console.log('✅ Order confirmation email sent to:', to);
-    res.json({ success: true, message: 'Email sent successfully', messageId: data?.id });
+    res.json({ success: true, message: 'Email sent successfully', messageId: data.id });
 
   } catch (error) {
     console.error('❌ Email sending error:', error.message);
