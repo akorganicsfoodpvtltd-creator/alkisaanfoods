@@ -21,7 +21,10 @@ export default function Home() {
 
       {/* Hero / Slider */}
       <HeroSlider />
-
+ {/* Certifications Section */}
+      <section id="certifications">
+        <CertificationSection />
+      </section>
       {/* Products Section */}
       <section id="products">
         <ProductsSection />
@@ -42,10 +45,7 @@ export default function Home() {
         <AboutSection />
       </section>
 
-      {/* Certifications Section */}
-      <section id="certifications">
-        <CertificationSection />
-      </section>
+     
 
       {/* Contact Section */}
       <section id="contact-us">
