@@ -12,91 +12,74 @@ export default function StoresPage() {
   const [loading, setLoading] = useState(true);
   const [imageErrors, setImageErrors] = useState({});
 
-  // Cloudinary configuration
   const CLOUDINARY_CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'your-cloud-name';
 
-  // Helper function to get image URL from database
   const getStoreImageUrl = (storeImage) => {
     if (!storeImage) return null;
-    
-    // If it's already a full URL
-    if (storeImage.startsWith('http')) {
-      return storeImage;
-    }
-    
-    // If it's a Cloudinary public ID
+    if (storeImage.startsWith('http')) return storeImage;
     if (storeImage.includes('/') || storeImage.match(/^v\d+/)) {
       return `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/${storeImage}`;
     }
-    
-    // If it's a local file
     return `${process.env.NEXT_PUBLIC_API_URL}/uploads/${storeImage}`;
+  };
+
+  // ✅ Sort groups A-Z by store name
+  const sortGroupsAZ = (groups) => {
+    return Object.values(groups).sort((a, b) => {
+      const nameA = a.storeName.replace(/^(Al|The|A)\s+/i, '').toLowerCase().trim();
+      const nameB = b.storeName.replace(/^(Al|The|A)\s+/i, '').toLowerCase().trim();
+      return nameA.localeCompare(nameB);
+    });
   };
 
   useEffect(() => {
     const controller = new AbortController();
 
-   fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/stores`,{ signal: controller.signal })
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/stores`, { signal: controller.signal })
       .then((res) => res.json())
       .then((data) => {
-        console.log("✅ API Response - Total records:", data.length);
-        
-        // Ensure data is array
         const storesArray = Array.isArray(data) ? data : [];
-        console.log("✅ Total stores from API:", storesArray.length);
-        
-        // Log images to check if they're coming
-        storesArray.slice(0, 3).forEach(store => {
-          console.log(`📸 Store: ${store["Store Name"] || store.store_name}, Image:`, store.store_image);
-        });
-        
-        // Store ALL stores
         setAllStores(storesArray);
 
-        // Extract unique cities from ALL stores
-        const uniqueCities = [...new Set(storesArray
-          .map(store => store.City || store.city)
-          .filter(city => city && city.trim() !== '')
-        )].sort();
-        
-        console.log("✅ Unique cities found:", uniqueCities.length);
+        // ✅ Fix: normalize city names to avoid duplicates (trim + consistent casing)
+        const citySet = new Map();
+        storesArray.forEach(store => {
+          const raw = (store.City || store.city || '').trim();
+          if (!raw) return;
+          const key = raw.toLowerCase();
+          if (!citySet.has(key)) citySet.set(key, raw);
+        });
+
+        const uniqueCities = [...citySet.values()].sort((a, b) => a.localeCompare(b));
         setCities(["All", ...uniqueCities]);
 
         // Group stores by Store Name + City
         const grouped = storesArray.reduce((acc, store) => {
-          const storeName = store["Store Name"] || store.store_name;
-          const city = store.City || store.city;
-          
-          // Skip only if absolutely no name or city
-          if (!storeName || !city) {
-            console.warn("⚠️ Store missing name/city:", store);
-            return acc;
-          }
+          const storeName = (store["Store Name"] || store.store_name || '').trim();
+          const city = (store.City || store.city || '').trim();
 
-          const key = `${storeName}-${city}`;
-          
+          if (!storeName || !city) return acc;
+
+          const key = `${storeName.toLowerCase()}-${city.toLowerCase()}`;
+
           if (!acc[key]) {
             acc[key] = {
-              storeName: storeName,
-              city: city,
-              storeImage: store.store_image, // Store image at group level
+              storeName,
+              city,
+              storeImage: store.store_image,
               branches: [],
             };
           }
-          
-          // Add branch with all data
+
           acc[key].branches.push({
             Branch: store.Branch || store.branch_name || "Main Branch",
             Address: store.Address || store.address || "",
             PhoneNumber: store["Phone Number"] || store.phone || "",
           });
-          
+
           return acc;
         }, {});
 
-        console.log("✅ Grouped stores count:", Object.keys(grouped).length);
-        console.log("✅ Total branches across all groups:", storesArray.length);
-        
         setGroupedStores(grouped);
         setFilteredGroupedStores(grouped);
         setLoading(false);
@@ -111,46 +94,21 @@ export default function StoresPage() {
     return () => controller.abort();
   }, []);
 
-  // Filter stores by city and sort alphabetically
+  // ✅ Filter + sort A-Z whenever city or grouped stores change
   useEffect(() => {
     if (selectedCity === "All") {
-      // Sort ALL groups alphabetically by store name
-      const sortedGroups = Object.values(groupedStores).sort((a, b) => {
-        const nameA = a.storeName.replace(/^(Al|The|A)\s+/i, '').toLowerCase();
-        const nameB = b.storeName.replace(/^(Al|The|A)\s+/i, '').toLowerCase();
-        return nameA.localeCompare(nameB);
-      });
-      
-      // Convert back to object with sorted order
-      const sortedObj = {};
-      sortedGroups.forEach(group => {
-        const key = `${group.storeName}-${group.city}`;
-        sortedObj[key] = group;
-      });
-      
-      setFilteredGroupedStores(sortedObj);
+      setFilteredGroupedStores(groupedStores);
     } else {
-      // Filter by city and then sort
-      const filtered = Object.values(groupedStores)
-        .filter(group => group.city === selectedCity)
-        .sort((a, b) => {
-          const nameA = a.storeName.replace(/^(Al|The|A)\s+/i, '').toLowerCase();
-          const nameB = b.storeName.replace(/^(Al|The|A)\s+/i, '').toLowerCase();
-          return nameA.localeCompare(nameB);
-        });
-      
-      // Convert back to object
-      const filteredObj = {};
-      filtered.forEach(group => {
-        const key = `${group.storeName}-${group.city}`;
-        filteredObj[key] = group;
-      });
-      
-      setFilteredGroupedStores(filteredObj);
+      const filtered = Object.entries(groupedStores).reduce((acc, [key, group]) => {
+        if (group.city.toLowerCase() === selectedCity.toLowerCase()) {
+          acc[key] = group;
+        }
+        return acc;
+      }, {});
+      setFilteredGroupedStores(filtered);
     }
   }, [selectedCity, groupedStores]);
 
-  // Map store names to their logos (fallback if no database image)
   const getFallbackLogo = (storeName) => {
     if (!storeName || typeof storeName !== "string") return null;
 
@@ -191,11 +149,7 @@ export default function StoresPage() {
   };
 
   const handleImageError = (storeName) => {
-    console.log(`❌ Image error for store: ${storeName}`);
-    setImageErrors((prev) => ({
-      ...prev,
-      [storeName]: true,
-    }));
+    setImageErrors((prev) => ({ ...prev, [storeName]: true }));
   };
 
   const handleCitySelect = (city) => {
@@ -203,197 +157,188 @@ export default function StoresPage() {
   };
 
   if (loading) return (
-    <div className="text-center mt-10">
-      <p className="text-xl">Loading stores... ({allStores.length} loaded)</p>
+    <div style={{ backgroundColor: '#ffffff', minHeight: '100vh' }} className="flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+        <p className="text-xl text-gray-600">Loading stores...</p>
+      </div>
     </div>
   );
 
-  // Convert filtered grouped stores to array for rendering
-  const storeGroups = Object.values(filteredGroupedStores);
-  
-  // Calculate total branches being displayed
+  // ✅ A-Z sorted store groups
+  const storeGroups = sortGroupsAZ(filteredGroupedStores);
   const totalBranchesDisplayed = storeGroups.reduce((sum, group) => sum + group.branches.length, 0);
 
-  console.log("📊 Final stats:", {
-    totalStoresInDB: allStores.length,
-    totalGroups: storeGroups.length,
-    totalBranchesDisplayed: totalBranchesDisplayed,
-    selectedCity: selectedCity
-  });
-
   return (
-    <div className="px-4 py-8 max-w-7xl mx-auto">
-      {/* Heading */}
-      <div className="text-center mb-8">
-        <h1 className="text-4xl md:text-5xl font-bold text-green-800 mb-4">
-          Al Kissan Products Available At These Stores
-        </h1>
-        <p className="text-gray-600 text-lg">
-          Find our premium quality products at trusted retailers
-        </p>
-        
-        {/* Total stores count */}
-        <div className="mt-4 inline-flex items-center gap-2 bg-green-50 px-4 py-2 rounded-full">
-          <span className="text-green-700 font-semibold">
-            Total Stores: {allStores.length}
-          </span>
+    // ✅ Force white background — not affected by dark mode or any theme
+    <div style={{ backgroundColor: '#ffffff', minHeight: '100vh', color: '#1a1a1a' }}>
+      <div className="px-4 py-8 max-w-7xl mx-auto">
+
+        {/* Heading */}
+        <div className="text-center mb-8" style={{ backgroundColor: '#ffffff' }}>
+          <h1 className="text-4xl md:text-5xl font-bold text-green-800 mb-4">
+            Al Kissan Products Available At These Stores
+          </h1>
+          <p className="text-gray-600 text-lg">
+            Find our premium quality products at trusted retailers
+          </p>
+
+          <div className="mt-4 inline-flex items-center gap-2 bg-green-50 px-4 py-2 rounded-full border border-green-200">
+            <span className="text-green-700 font-semibold">
+              Total Stores: {allStores.length}
+            </span>
+          </div>
         </div>
-      </div>
 
-      {/* City Filter Buttons */}
-      <div className="mb-12">
-        <div className="flex flex-wrap justify-center gap-2 md:gap-3">
-          {cities.map((city) => {
-            // Count stores in this city
-            const storeCount = city === "All" 
-              ? allStores.length 
-              : allStores.filter(s => (s.City || s.city) === city).length;
-              
-            return (
-              <button
-                key={city}
-                onClick={() => handleCitySelect(city)}
-                className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
-                  selectedCity === city
-                    ? "bg-green-700 text-white shadow-md"
-                    : "bg-green-100 text-green-800 hover:bg-green-200"
-                }`}
-              >
-                {city} <span className="text-sm opacity-75">({storeCount})</span>
-              </button>
-            );
-          })}
+        {/* ✅ City Filter Buttons — deduplicated */}
+        <div className="mb-10">
+          <div className="flex flex-wrap justify-center gap-2 md:gap-3">
+            {cities.map((city) => {
+              // ✅ Fixed count — normalize city comparison
+              const storeCount = city === "All"
+                ? allStores.length
+                : allStores.filter(s =>
+                    (s.City || s.city || '').trim().toLowerCase() === city.toLowerCase()
+                  ).length;
+
+              return (
+                <button
+                  key={city}
+                  onClick={() => handleCitySelect(city)}
+                  className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+                    selectedCity === city
+                      ? "bg-green-700 text-white shadow-md"
+                      : "bg-green-100 text-green-800 hover:bg-green-200"
+                  }`}
+                >
+                  {city} <span className="text-sm opacity-75">({storeCount})</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </div>
 
-      {/* Results Info */}
-      <div className="mb-8 text-center">
-        <p className="text-lg text-gray-700">
-          Showing <span className="font-bold">{totalBranchesDisplayed}</span> store
-          {totalBranchesDisplayed !== 1 ? "s" : ""} 
-          {selectedCity !== "All" && ` in ${selectedCity}`}
-        </p>
-      </div>
-
-      {/* Stores List */}
-      {storeGroups.length > 0 ? (
-        <div className="space-y-16">
-          {storeGroups.map((storeGroup, index) => {
-            // Get image from database (priority 1)
-            const dbImageUrl = getStoreImageUrl(storeGroup.storeImage);
-            
-            // Get fallback logo (priority 2)
-            const fallbackLogo = getFallbackLogo(storeGroup.storeName);
-            
-            // Determine which image to show: DB image > fallback logo > null
-            const imageSource = dbImageUrl || fallbackLogo;
-            const hasImageError = imageErrors[storeGroup.storeName];
-
-            console.log(`🖼️ ${storeGroup.storeName}:`, {
-              dbImage: storeGroup.storeImage,
-              dbImageUrl,
-              fallbackLogo,
-              finalSource: imageSource
-            });
-
-            return (
-              <div key={`${storeGroup.storeName}-${storeGroup.city}-${index}`}>
-                <div className="md:grid md:grid-cols-12 gap-8 items-start">
-                  {/* LEFT SIDE - Store Info */}
-                  <div className="md:col-span-7 space-y-6">
-                    <div>
-                      <h2 className="text-3xl font-bold text-gray-800">{storeGroup.storeName}</h2>
-                      <div className="flex items-center gap-2 mt-2">
-                        <span className="text-xl font-semibold text-gray-600">{storeGroup.city}</span>
-                        <span className="inline-block px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded">
-                          {storeGroup.branches.length} branch{storeGroup.branches.length !== 1 ? "es" : ""}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="space-y-6">
-                      {storeGroup.branches.map((branch, i) => (
-                        <div key={i}>
-                          <h4 className="text-lg font-semibold text-gray-800">
-                            {branch.Branch || "Main Branch"}
-                          </h4>
-                          {branch.Address && <p className="text-gray-600">{branch.Address}</p>}
-                          {branch.PhoneNumber && (
-                            <p className="text-gray-600 font-medium">{branch.PhoneNumber}</p>
-                          )}
-                          {i < storeGroup.branches.length - 1 && (
-                            <div className="mt-4 border-b border-gray-100" />
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* RIGHT SIDE - Logo */}
-                  <div className="md:col-span-5 mt-8 md:mt-0 text-center">
-                    <div className="relative inline-block">
-                      {/* Decorative blurred background */}
-                      <div className="absolute inset-0 bg-green-300 blur-lg opacity-30 rounded-full"></div>
-
-                      {/* Circular Image Container */}
-                      <div className="relative w-72 h-72 md:w-80 md:h-80 rounded-full bg-green-50 border-8 border-white shadow-xl overflow-hidden flex items-center justify-center">
-                        {imageSource && !hasImageError ? (
-                          <Image
-                            src={imageSource}
-                            alt={`${storeGroup.storeName} Logo`}
-                            className="object-contain"
-                            onError={() => handleImageError(storeGroup.storeName)}
-                            priority={index < 2}
-                            unoptimized={imageSource.startsWith('http')}
-                            fill
-                            sizes="(max-width: 768px) 288px, 320px"
-                          />
-                        ) : (
-                          <div className="flex flex-col items-center justify-center w-full h-full">
-                            <div className="text-6xl font-bold text-green-600">
-                              {storeGroup.storeName?.charAt(0)}
-                            </div>
-                            <p className="font-semibold text-gray-600 text-center">
-                              {storeGroup.storeName}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Image source indicator */}
-                    {dbImageUrl && !hasImageError && (
-                      <p className="text-xs text-green-600 mt-2">
-                      
-                      </p>
-                    )}
-                    {!dbImageUrl && fallbackLogo && !hasImageError && (
-                      <p className="text-xs text-blue-600 mt-2">
-                      
-                      </p>
-                    )}
-
-                    {/* Store info */}
-                    <p className="mt-6 text-gray-600">
-                      Visit{" "}
-                      <span className="font-semibold text-green-700">{storeGroup.storeName}</span> in{" "}
-                      {storeGroup.city}
-                    </p>
-                  </div>
-                </div>
-
-                {index < storeGroups.length - 1 && <div className="mt-16 border-t border-gray-200" />}
-              </div>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="text-center py-12">
-          <p className="text-xl text-gray-600">
-            No stores found in {selectedCity}. Try selecting a different city.
+        {/* Results count */}
+        <div className="mb-8 text-center">
+          <p className="text-lg text-gray-700">
+            Showing <span className="font-bold text-green-700">{totalBranchesDisplayed}</span> store
+            {totalBranchesDisplayed !== 1 ? "s" : ""}
+            {selectedCity !== "All" && ` in ${selectedCity}`}
+            {" "}— sorted A to Z
           </p>
         </div>
-      )}
+
+        {/* ✅ Stores List — A to Z */}
+        {storeGroups.length > 0 ? (
+          <div className="space-y-16" style={{ backgroundColor: '#ffffff' }}>
+            {storeGroups.map((storeGroup, index) => {
+              const dbImageUrl = getStoreImageUrl(storeGroup.storeImage);
+              const fallbackLogo = getFallbackLogo(storeGroup.storeName);
+              const imageSource = dbImageUrl || fallbackLogo;
+              const hasImageError = imageErrors[storeGroup.storeName];
+
+              return (
+                <div
+                  key={`${storeGroup.storeName}-${storeGroup.city}-${index}`}
+                  style={{ backgroundColor: '#ffffff' }}
+                >
+                  <div className="md:grid md:grid-cols-12 gap-8 items-start">
+
+                    {/* LEFT — Store Info */}
+                    <div className="md:col-span-7 space-y-6">
+                      {/* ✅ A-Z index badge */}
+                      <div className="flex items-center gap-3">
+                        <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-green-700 text-white font-bold text-lg flex-shrink-0">
+                          {storeGroup.storeName.replace(/^(Al|The|A)\s+/i, '').charAt(0).toUpperCase()}
+                        </span>
+                        <div>
+                          <h2 className="text-3xl font-bold text-gray-800">{storeGroup.storeName}</h2>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-xl font-semibold text-gray-600">{storeGroup.city}</span>
+                            <span className="inline-block px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded">
+                              {storeGroup.branches.length} branch{storeGroup.branches.length !== 1 ? "es" : ""}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-6">
+                        {storeGroup.branches.map((branch, i) => (
+                          <div key={i}>
+                            <h4 className="text-lg font-semibold text-gray-800">
+                              {branch.Branch || "Main Branch"}
+                            </h4>
+                            {branch.Address && <p className="text-gray-600">{branch.Address}</p>}
+                            {branch.PhoneNumber && (
+                              <p className="text-gray-600 font-medium">{branch.PhoneNumber}</p>
+                            )}
+                            {i < storeGroup.branches.length - 1 && (
+                              <div className="mt-4 border-b border-gray-100" />
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* RIGHT — Logo */}
+                    <div className="md:col-span-5 mt-8 md:mt-0 text-center">
+                      <div className="relative inline-block">
+                        <div className="absolute inset-0 bg-green-300 blur-lg opacity-30 rounded-full"></div>
+                        <div className="relative w-72 h-72 md:w-80 md:h-80 rounded-full bg-green-50 border-8 border-white shadow-xl overflow-hidden flex items-center justify-center" style={{ backgroundColor: '#f0fdf4' }}>
+                          {imageSource && !hasImageError ? (
+                            <Image
+                              src={imageSource}
+                              alt={`${storeGroup.storeName} Logo`}
+                              className="object-contain"
+                              onError={() => handleImageError(storeGroup.storeName)}
+                              priority={index < 2}
+                              unoptimized={!!dbImageUrl}
+                              fill
+                              sizes="(max-width: 768px) 288px, 320px"
+                            />
+                          ) : (
+                            <div className="flex flex-col items-center justify-center w-full h-full">
+                              <div className="text-6xl font-bold text-green-600">
+                                {storeGroup.storeName?.charAt(0)}
+                              </div>
+                              <p className="font-semibold text-gray-600 text-center px-4">
+                                {storeGroup.storeName}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <p className="mt-6 text-gray-600">
+                        Visit{" "}
+                        <span className="font-semibold text-green-700">{storeGroup.storeName}</span>{" "}
+                        in {storeGroup.city}
+                      </p>
+                    </div>
+                  </div>
+
+                  {index < storeGroups.length - 1 && (
+                    <div className="mt-16 border-t border-gray-200" />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <p className="text-xl text-gray-600">
+              No stores found{selectedCity !== "All" ? ` in ${selectedCity}` : ""}. Try selecting a different city.
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* ✅ Force white bg globally for this page — overrides dark mode */}
+      <style>{`
+        body {
+          background-color: #ffffff !important;
+        }
+      `}</style>
     </div>
   );
 }
