@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { FiUser, FiMail, FiMessageSquare, FiSend, FiCheckCircle } from "react-icons/fi";
 
-// ✅ FIX: Hardcoded fallback taake browser mein bhi kaam kare
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://alkisaanfoods-production-34db.up.railway.app";
 
 export default function ContactSection() {
@@ -69,10 +68,8 @@ export default function ContactSection() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: "" }));
-    }
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
     if (submitError) setSubmitError("");
   };
 
@@ -90,26 +87,28 @@ export default function ContactSection() {
         body: JSON.stringify(formData),
       });
 
-      const text = await response.text();
-
+      // ✅ Always parse JSON properly
       let data;
       try {
-        data = JSON.parse(text);
+        data = await response.json();
       } catch {
-        throw new Error("Server error. Please try again later.");
+        throw new Error("Server returned an invalid response. Please try again.");
       }
 
+      // ✅ Check BOTH response.ok AND data.success — show real error if either fails
       if (!response.ok || !data.success) {
-        throw new Error(data.message || "Failed to send message");
+        throw new Error(data?.message || `Server error (${response.status}). Please try again.`);
       }
 
+      // ✅ Only show success if truly successful
       setFormData({ name: "", email: "", subject: "", message: "" });
       setIsSubmitted(true);
       setTimeout(() => setIsSubmitted(false), 10000);
 
     } catch (error) {
       console.error("Submission error:", error);
-      setSubmitError(error.message || "Failed to send message.");
+      // ✅ Show the real error message to user
+      setSubmitError(error.message || "Failed to send message. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -139,6 +138,7 @@ export default function ContactSection() {
 
           <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
             <div className="grid grid-cols-1 lg:grid-cols-3">
+
               {/* Left Side - Contact Info */}
               <div className="bg-gradient-to-br from-green-600 to-emerald-700 text-white p-8 md:p-12 lg:p-16">
                 <h3 className="text-2xl font-bold mb-8">Get in Touch</h3>
@@ -206,7 +206,10 @@ export default function ContactSection() {
                       <p className="text-green-600 font-medium">✓ Your message has been sent to our team</p>
                       <p className="text-gray-500 text-sm">We'll contact you soon.</p>
                     </div>
-                    <button onClick={() => setIsSubmitted(false)} className="inline-flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-green-700 transition-colors">
+                    <button
+                      onClick={() => setIsSubmitted(false)}
+                      className="inline-flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-green-700 transition-colors"
+                    >
                       Send Another Message
                     </button>
                   </div>
@@ -214,35 +217,72 @@ export default function ContactSection() {
                   <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Your Name <span className="text-red-500">*</span></label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Your Name <span className="text-red-500">*</span>
+                        </label>
                         <div className="relative">
                           <FiUser className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                          <input type="text" name="name" value={formData.name} onChange={handleChange} className={`w-full pl-12 pr-4 py-3.5 border ${errors.name ? "border-red-300" : "border-gray-300"} rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all bg-white text-gray-900`} placeholder="Full Name" />
+                          <input
+                            type="text"
+                            name="name"
+                            value={formData.name}
+                            onChange={handleChange}
+                            className={`w-full pl-12 pr-4 py-3.5 border ${errors.name ? "border-red-300 bg-red-50" : "border-gray-300"} rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all bg-white text-gray-900`}
+                            placeholder="Full Name"
+                          />
                         </div>
                         {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Email Address <span className="text-red-500">*</span></label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Email Address <span className="text-red-500">*</span>
+                        </label>
                         <div className="relative">
                           <FiMail className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                          <input type="email" name="email" value={formData.email} onChange={handleChange} className={`w-full pl-12 pr-4 py-3.5 border ${errors.email ? "border-red-300" : "border-gray-300"} rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all bg-white text-gray-900`} placeholder="Your Email" />
+                          <input
+                            type="email"
+                            name="email"
+                            value={formData.email}
+                            onChange={handleChange}
+                            className={`w-full pl-12 pr-4 py-3.5 border ${errors.email ? "border-red-300 bg-red-50" : "border-gray-300"} rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all bg-white text-gray-900`}
+                            placeholder="Your Email"
+                          />
                         </div>
                         {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
                       </div>
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Subject <span className="text-red-500">*</span></label>
-                      <input type="text" name="subject" value={formData.subject} onChange={handleChange} className={`w-full px-4 py-3.5 border ${errors.subject ? "border-red-300" : "border-gray-300"} rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all bg-white text-gray-900`} placeholder="How can we help you?" />
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Subject <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="subject"
+                        value={formData.subject}
+                        onChange={handleChange}
+                        className={`w-full px-4 py-3.5 border ${errors.subject ? "border-red-300 bg-red-50" : "border-gray-300"} rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all bg-white text-gray-900`}
+                        placeholder="How can we help you?"
+                      />
                       {errors.subject && <p className="mt-1 text-sm text-red-600">{errors.subject}</p>}
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Your Message <span className="text-red-500">*</span></label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Your Message <span className="text-red-500">*</span>
+                      </label>
                       <div className="relative">
                         <FiMessageSquare className="absolute left-4 top-4 text-gray-400" />
-                        <textarea name="message" value={formData.message} onChange={handleChange} rows={5} maxLength={500} className={`w-full pl-12 pr-4 py-3.5 border ${errors.message ? "border-red-300" : "border-gray-300"} rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all resize-none bg-white text-gray-900`} placeholder="Tell us about your inquiry..." />
+                        <textarea
+                          name="message"
+                          value={formData.message}
+                          onChange={handleChange}
+                          rows={5}
+                          maxLength={500}
+                          className={`w-full pl-12 pr-4 py-3.5 border ${errors.message ? "border-red-300 bg-red-50" : "border-gray-300"} rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all resize-none bg-white text-gray-900`}
+                          placeholder="Tell us about your inquiry..."
+                        />
                       </div>
                       <div className="flex justify-between items-center mt-1">
                         {errors.message ? (
@@ -250,30 +290,46 @@ export default function ContactSection() {
                         ) : (
                           <p className="text-xs text-gray-500">Please include relevant details</p>
                         )}
-                        <span className={`text-xs ${formData.message.length < 10 ? "text-gray-400" : "text-green-600"}`}>{formData.message.length}/500</span>
+                        <span className={`text-xs ${formData.message.length < 10 ? "text-gray-400" : "text-green-600"}`}>
+                          {formData.message.length}/500
+                        </span>
                       </div>
                     </div>
 
+                    {/* ✅ Error box — shows real error from backend */}
                     {submitError && (
                       <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-                        <div className="flex items-start">
-                          <svg className="w-5 h-5 text-red-500 mt-0.5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="flex items-start gap-2">
+                          <svg className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.782 16.5c-.77.833.192 2.5 1.732 2.5z" />
                           </svg>
                           <div>
                             <p className="text-red-600 text-sm font-medium mb-1">Unable to send message</p>
                             <p className="text-red-500 text-sm">{submitError}</p>
-                            <p className="text-gray-600 text-xs mt-2">Contact us directly at <strong>+923004809083</strong> or <strong>akorganicsfoodpvtltd@gmail.com</strong></p>
+                            <p className="text-gray-600 text-xs mt-2">
+                              Contact us directly at <strong>+923004809083</strong> or{" "}
+                              <strong>akorganicsfoodpvtltd@gmail.com</strong>
+                            </p>
                           </div>
                         </div>
                       </div>
                     )}
 
-                    <button type="submit" disabled={isSubmitting} className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white py-4 rounded-xl font-semibold hover:from-green-700 hover:to-emerald-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed">
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="w-full flex items-center justify-center gap-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white py-4 rounded-xl font-semibold hover:from-green-700 hover:to-emerald-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
                       {isSubmitting ? (
-                        <><div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>Sending Message...</>
+                        <>
+                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          Sending Message...
+                        </>
                       ) : (
-                        <><FiSend className="w-5 h-5" />Send Message</>
+                        <>
+                          <FiSend className="w-5 h-5" />
+                          Send Message
+                        </>
                       )}
                     </button>
 
