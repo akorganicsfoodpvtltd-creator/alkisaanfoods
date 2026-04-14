@@ -1,5 +1,5 @@
 import express from "express";
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
 const router = express.Router();
 
@@ -10,33 +10,17 @@ router.post("/", async (req, res) => {
     return res.status(400).json({ success: false, message: "All fields are required" });
   }
 
-  if (!process.env.COMPANY_EMAIL || !process.env.COMPANY_EMAIL_PASSWORD) {
-    console.error("❌ COMPANY_EMAIL or COMPANY_EMAIL_PASSWORD not set!");
+  if (!process.env.RESEND_API_KEY) {
+    console.error("❌ RESEND_API_KEY not set!");
     return res.status(500).json({ success: false, message: "Email service not configured" });
   }
 
   try {
-    // ✅ Port 465 with secure:true — works on Railway (587 is blocked)
-    const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 465,
-      secure: true,
-      auth: {
-        user: process.env.COMPANY_EMAIL,
-        pass: process.env.COMPANY_EMAIL_PASSWORD,
-      },
-      tls: {
-        rejectUnauthorized: false,
-      },
-    });
+    const resend = new Resend(process.env.RESEND_API_KEY);
 
-    // ✅ Verify connection before sending
-    await transporter.verify();
-    console.log("✅ SMTP connection verified");
-
-    await transporter.sendMail({
-      from: `"Al Kissan Foods" <${process.env.COMPANY_EMAIL}>`,
-      to: process.env.COMPANY_EMAIL,
+    await resend.emails.send({
+      from: "Al Kissan Foods <onboarding@resend.dev>", // Resend ka default sender
+      to: "akorganicsfoodpvtltd@gmail.com",
       replyTo: email,
       subject: `[Contact Form] ${name} - ${subject}`,
       html: `
@@ -71,8 +55,7 @@ router.post("/", async (req, res) => {
     return res.status(200).json({ success: true, message: "Message sent successfully" });
 
   } catch (error) {
-    console.error("❌ Email error:", error.message);
-    // ✅ Return actual error so frontend shows real message
+    console.error("❌ Resend error:", error.message);
     return res.status(500).json({
       success: false,
       message: "Failed to send email: " + error.message,
