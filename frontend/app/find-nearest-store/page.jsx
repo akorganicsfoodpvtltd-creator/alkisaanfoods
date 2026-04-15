@@ -261,7 +261,6 @@ export default function FindNearestStore() {
   }
 
   return (
-    // ✅ Force white background always — overrides dark mode
     <div style={{ backgroundColor: "#ffffff", minHeight: "100%" }}>
       <div className="max-w-2xl mx-auto p-4 md:p-6">
 
@@ -441,7 +440,7 @@ export default function FindNearestStore() {
                   style={{ backgroundColor: "#f0fdf4", borderColor: "#bbf7d0" }}
                 >
                   <h3 className="font-bold mb-4 text-lg" style={{ color: "#111827" }}>📍 View on Map</h3>
-                  
+                  <a
                     href={`https://www.google.com/maps?q=${nearestBranch.latitude},${nearestBranch.longitude}`}
                     target="_blank"
                     rel="noopener noreferrer"
