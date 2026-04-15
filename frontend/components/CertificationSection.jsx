@@ -10,7 +10,6 @@ export default function CertificationSection() {
     { logo: "/Qarshi Lab.jpg", name: "Qarshi Labs" },
     { logo: "/Acerta ISO 22000.png", name: "ISO 22000" },
     { logo: "/Pakistan Standards Logo.png", name: "PSQCA" },
-  
     { logo: "/Acerta ISO 9001.png", name: "ISO 9001:2015" },
     { logo: "/PCSIR Logo.png", name: "PCSIR Approved" },
   ];
@@ -161,6 +160,104 @@ export default function CertificationSection() {
                 }}
               >
                 {s.label}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* BOTTOM 2 — 4 Trust Cards */}
+      <div className="mt-4 px-4 md:px-6 max-w-5xl mx-auto">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+          {[
+            {
+              icon: (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="1" y="13" width="4" height="7" rx="1" fill="#15803d" />
+                  <path d="M5 14H14.5C15.88 14 17 13.1 17 12H9V10H18.5C19.88 10 21 10.9 21 12L18 19H5V14Z" fill="#15803d" />
+                  <circle cx="7" cy="20" r="1.5" fill="#15803d" />
+                  <circle cx="16" cy="20" r="1.5" fill="#15803d" />
+                </svg>
+              ),
+              num: "Cash on Delivery",
+              label: "All Over Pakistan",
+              desc: "Order now, pay when it arrives at your door",
+            },
+            {
+              icon: (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M3 8H16V17H3z" rx="1" fill="#15803d" opacity="0.2" />
+                  <rect x="3" y="8" width="13" height="9" rx="1" stroke="#15803d" strokeWidth="1.5" fill="none" />
+                  <path d="M16 10H19L21 13V17H16V10Z" fill="#15803d" opacity="0.15" stroke="#15803d" strokeWidth="1.5" strokeLinejoin="round" />
+                  <circle cx="7" cy="18.5" r="1.5" fill="#15803d" />
+                  <circle cx="18" cy="18.5" r="1.5" fill="#15803d" />
+                  <path d="M6 5L10 5M8 5L8 8" stroke="#15803d" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+              ),
+              num: "Fast Delivery",
+              label: "Nationwide Shipping",
+              desc: "Swift & reliable delivery to your doorstep",
+            },
+            {
+              icon: (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="9" cy="7" r="3" fill="#15803d" opacity="0.25" stroke="#15803d" strokeWidth="1.5" />
+                  <circle cx="17" cy="7" r="2" fill="#15803d" opacity="0.15" stroke="#15803d" strokeWidth="1.5" />
+                  <path d="M2 19C2 16.24 5.13 14 9 14C12.87 14 16 16.24 16 19" stroke="#15803d" strokeWidth="1.5" strokeLinecap="round" />
+                  <path d="M16 14C18.21 14 20 15.57 20 17.5" stroke="#15803d" strokeWidth="1.5" strokeLinecap="round" />
+                  <path d="M7 21L9 19L11 21" stroke="#15803d" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              ),
+              num: "100,000+",
+              label: "Happy Customers",
+              desc: "Thousands of satisfied customers across Pakistan",
+            },
+            {
+              icon: (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 3L4 6V12C4 16.42 7.5 20.57 12 21C16.5 20.57 20 16.42 20 12V6L12 3Z" fill="#15803d" opacity="0.15" stroke="#15803d" strokeWidth="1.5" strokeLinejoin="round" />
+                  <path d="M9 12L11 14L15 10" stroke="#15803d" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              ),
+              num: "14 Days",
+              label: "Happiness Guarantee",
+              desc: "Not satisfied? Full money back, no questions asked",
+            },
+          ].map((s, i) => (
+            <div
+              key={i}
+              className="rounded-2xl text-center border border-gray-100 hover:border-green-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 flex flex-col items-center justify-center gap-1"
+              style={{ background: "#f8faf8", padding: "clamp(0.75rem, 2vw, 1.25rem)" }}
+            >
+              <div
+                className="flex items-center justify-center rounded-full bg-green-100"
+                style={{ width: "2.25rem", height: "2.25rem" }}
+              >
+                {s.icon}
+              </div>
+              <div
+                className="font-bold text-green-700"
+                style={{
+                  fontFamily: "Georgia, serif",
+                  fontSize: "clamp(0.75rem, 2.5vw, 1rem)",
+                }}
+              >
+                {s.num}
+              </div>
+              <div
+                className="text-gray-500 tracking-wide uppercase"
+                style={{
+                  fontFamily: "system-ui",
+                  fontSize: "clamp(0.55rem, 1.5vw, 0.75rem)",
+                }}
+              >
+                {s.label}
+              </div>
+              <div
+                className="text-gray-400 leading-snug"
+                style={{ fontSize: "clamp(0.5rem, 1.4vw, 0.7rem)" }}
+              >
+                {s.desc}
               </div>
             </div>
           ))}
