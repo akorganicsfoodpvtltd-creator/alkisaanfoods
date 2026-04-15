@@ -1,5 +1,4 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Open+Sans:wght@400;500;600&display=swap');
-
 @import "tailwindcss";
 
 :root {
@@ -10,36 +9,22 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
 }
 
-/* Dark mode override hatao ya background fix karo */
+/* Dark mode disable */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #ffffff;  /* Dark mode mein bhi white rakho */
-    --foreground: #171717;  /* Text bhi dark rakho */
+    --background: #ffffff;
+    --foreground: #171717;
   }
 }
 
-/* Sirf body aur root fix karo */
 body {
-  background: #ffffff !important;
+  background: #ffffff;
   color: #171717;
   font-family: Arial, Helvetica, sans-serif;
 }
 
 html {
   background: #ffffff;
-}
-/* Saare sections/components ka background white force karo */
-section,
-div,
-main,
-article,
-aside,
-header,
-
-nav {
-  background-color: white;
 }
