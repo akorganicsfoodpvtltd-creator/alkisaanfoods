@@ -85,7 +85,7 @@ export default function DietitianSection() {
                   <FaQuoteLeft className="text-2xl flex-shrink-0" style={{ color: GREEN_PRIMARY }} />
                   <div>
                   <p className="text-gray-700 dark:text-gray-700 text-lg mb-4 text-justify">
-  "With over 15 years of experience, I recommend Al Kissan Multigrain Flour for diabetic patients, weight management, and overall wellness. Packed with essential nutrients and gluten-friendly, it ensures purity and consistency for healthy meal planning."
+  "With over 10 years of experience, I recommend Al Kissan Multigrain Flour for diabetic patients, weight management, and overall wellness. Packed with essential nutrients and gluten-friendly, it ensures purity and consistency for healthy meal planning."
 </p>
 
 
