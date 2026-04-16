@@ -20,8 +20,8 @@ const LoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
   const [code, setCode] = useState(["", "", "", "", "", ""]);
   const [status, setStatus] = useState({ type: null, message: "" });
   const [countdown, setCountdown] = useState(0);
-  const [googleClicked, setGoogleClicked] = useState(false);
-  const [emailSubmitted, setEmailSubmitted] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [emailLoading, setEmailLoading] = useState(false);
   const codeInputRefs = useRef([]);
 
   useEffect(() => {
@@ -31,8 +31,8 @@ const LoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
       setCode(["", "", "", "", "", ""]);
       setStatus({ type: null, message: "" });
       setCountdown(0);
-      setGoogleClicked(false);
-      setEmailSubmitted(false);
+      setGoogleLoading(false);
+      setEmailLoading(false);
     }
   }, [isOpen]);
 
@@ -63,9 +63,12 @@ const LoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
     return re.test(email);
   };
 
-  const handleGoogleLogin = async () => {
-    setGoogleClicked(true);
-    setLoading(true);
+  // ✅ FIX: Google button has its own isolated loading state and is type="button"
+  const handleGoogleLogin = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (googleLoading || emailLoading) return;
+    setGoogleLoading(true);
     setStatus({ type: 'info', message: "Redirecting to Google..." });
     try {
       const googleAuthUrl = `${process.env.NEXT_PUBLIC_API_URL}/api/auth/google`;
@@ -73,19 +76,20 @@ const LoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
     } catch (error) {
       console.error("Google login error:", error);
       setStatus({ type: 'error', message: "Failed to initiate Google login" });
-      setGoogleClicked(false);
-      setLoading(false);
+      setGoogleLoading(false);
     }
   };
 
+  // ✅ FIX: Email submit has its own isolated loading state
   const handleEmailSubmit = async (e) => {
     e.preventDefault();
+    e.stopPropagation();
+    if (googleLoading || emailLoading) return;
     if (!validateEmail(email)) {
       setStatus({ type: 'error', message: "Please enter a valid email address" });
       return;
     }
-    setLoading(true);
-    setEmailSubmitted(true);
+    setEmailLoading(true);
     setStatus({ type: 'info', message: "Sending verification code..." });
     try {
       const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/send-code`, { email });
@@ -102,7 +106,6 @@ const LoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
         setTimeout(() => { if (codeInputRefs.current[0]) codeInputRefs.current[0].focus(); }, 200);
       } else {
         setStatus({ type: 'error', message: response.data.message || "Failed to send verification code" });
-        setEmailSubmitted(false);
       }
     } catch (error) {
       console.error("Send code error:", error);
@@ -111,7 +114,7 @@ const LoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
       setStatus({ type: 'info', message: `⚠️ Development mode<br>Use test code: <strong>123456</strong>` });
       setTimeout(() => { if (codeInputRefs.current[0]) codeInputRefs.current[0].focus(); }, 200);
     } finally {
-      setLoading(false);
+      setEmailLoading(false);
     }
   };
 
@@ -149,7 +152,7 @@ const LoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
       setStatus({ type: 'error', message: "Please enter the complete 6-digit code" });
       return;
     }
-    setLoading(true);
+    setEmailLoading(true);
     setStatus({ type: 'info', message: "Verifying code..." });
     try {
       const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/verify-code`, { email, code: verificationCode });
@@ -167,13 +170,13 @@ const LoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
       console.error("Verify error:", error);
       setStatus({ type: 'error', message: error.response?.data?.message || "Verification failed. Please try again." });
     } finally {
-      setLoading(false);
+      setEmailLoading(false);
     }
   };
 
   const handleResendCode = async () => {
     if (countdown > 0) return;
-    setLoading(true);
+    setEmailLoading(true);
     setStatus({ type: 'info', message: "Sending new code..." });
     try {
       const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/resend-code`, { email });
@@ -187,7 +190,7 @@ const LoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
       console.error("Resend error:", error);
       setStatus({ type: 'error', message: "Failed to resend code. Please try again." });
     } finally {
-      setLoading(false);
+      setEmailLoading(false);
     }
   };
 
@@ -199,6 +202,9 @@ const LoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
   };
 
   if (!isOpen) return null;
+
+  // ✅ FIX: Derived combined loading for disabling inputs (but NOT for button visual states)
+  const anyLoading = googleLoading || emailLoading;
 
   return (
     <>
@@ -222,20 +228,49 @@ const LoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
             )}
             {step === 1 ? (
               <div className="space-y-4">
-                <button onClick={handleGoogleLogin} disabled={loading} className={`w-full flex items-center justify-center gap-3 py-3 px-4 rounded-lg font-medium text-sm sm:text-base transition-all duration-200 border relative disabled:opacity-70 disabled:cursor-not-allowed ${googleClicked ? 'bg-gradient-to-r from-green-600 to-green-700 text-white border-green-600 shadow-md' : 'bg-white text-gray-700 border-gray-300 hover:border-green-500 hover:shadow-sm'}`}>
-                  {loading && googleClicked ? (<><FaSpinner className="animate-spin" /><span>Redirecting...</span></>) : (<><FcGoogle className="text-xl" /><span>Continue with Google</span></>)}
+                {/* ✅ FIX: type="button" prevents this from submitting the email form below */}
+                <button
+                  type="button"
+                  onClick={handleGoogleLogin}
+                  disabled={anyLoading}
+                  className={`w-full flex items-center justify-center gap-3 py-3 px-4 rounded-lg font-medium text-sm sm:text-base transition-all duration-200 border relative disabled:opacity-70 disabled:cursor-not-allowed ${googleLoading ? 'bg-gradient-to-r from-green-600 to-green-700 text-white border-green-600 shadow-md' : 'bg-white text-gray-700 border-gray-300 hover:border-green-500 hover:shadow-sm'}`}
+                >
+                  {googleLoading
+                    ? (<><FaSpinner className="animate-spin" /><span>Redirecting...</span></>)
+                    : (<><FcGoogle className="text-xl" /><span>Continue with Google</span></>)
+                  }
                 </button>
+
                 <div className="relative my-4">
                   <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-300"></div></div>
                   <div className="relative flex justify-center"><span className="px-3 bg-white text-gray-500 text-sm">or</span></div>
                 </div>
+
+                {/* ✅ FIX: Form is completely separate from the Google button */}
                 <form onSubmit={handleEmailSubmit} className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
-                    <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} disabled={loading} className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all text-sm sm:text-base disabled:bg-gray-50" placeholder="Enter your email" required autoComplete="email" />
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      disabled={anyLoading}
+                      className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all text-sm sm:text-base disabled:bg-gray-50"
+                      placeholder="Enter your email"
+                      required
+                      autoComplete="email"
+                    />
                   </div>
-                  <button type="submit" disabled={loading || !email || !validateEmail(email)} className={`w-full py-3 rounded-lg font-medium text-sm sm:text-base transition-all duration-200 relative disabled:opacity-70 disabled:cursor-not-allowed ${emailSubmitted ? 'bg-gradient-to-r from-green-600 to-green-700 text-white shadow-md' : 'bg-gradient-to-r from-green-600 to-green-700 text-white hover:shadow-md'}`}>
-                    {loading ? (<div className="flex items-center justify-center gap-2"><FaSpinner className="animate-spin" /><span>Sending...</span></div>) : (<div className="flex items-center justify-center gap-2"><span>Continue</span><FiChevronRight className="text-lg" /></div>)}
+                  {/* ✅ FIX: type="submit" only submits THIS form, not Google */}
+                  <button
+                    type="submit"
+                    disabled={anyLoading || !email || !validateEmail(email)}
+                    className="w-full py-3 rounded-lg font-medium text-sm sm:text-base transition-all duration-200 relative disabled:opacity-70 disabled:cursor-not-allowed bg-gradient-to-r from-green-600 to-green-700 text-white hover:shadow-md"
+                  >
+                    {emailLoading
+                      ? (<div className="flex items-center justify-center gap-2"><FaSpinner className="animate-spin" /><span>Sending...</span></div>)
+                      : (<div className="flex items-center justify-center gap-2"><span>Continue</span><FiChevronRight className="text-lg" /></div>)
+                    }
                   </button>
                 </form>
               </div>
@@ -246,7 +281,20 @@ const LoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
                   <p className="font-medium text-gray-800 mb-6">{email}</p>
                   <div className="flex justify-center gap-2 sm:gap-3 mb-6">
                     {code.map((digit, index) => (
-                      <input key={index} ref={el => codeInputRefs.current[index] = el} type="text" inputMode="numeric" pattern="\d*" maxLength={1} value={digit} onChange={(e) => handleCodeChange(index, e.target.value)} onKeyDown={(e) => handleCodeKeyDown(index, e)} disabled={loading} className="w-12 h-12 sm:w-14 sm:h-14 text-center text-xl sm:text-2xl font-bold rounded-lg border-2 border-gray-300 focus:border-green-500 focus:ring-1 focus:ring-green-200 outline-none transition-all bg-white disabled:bg-gray-50" autoComplete="off" />
+                      <input
+                        key={index}
+                        ref={el => codeInputRefs.current[index] = el}
+                        type="text"
+                        inputMode="numeric"
+                        pattern="\d*"
+                        maxLength={1}
+                        value={digit}
+                        onChange={(e) => handleCodeChange(index, e.target.value)}
+                        onKeyDown={(e) => handleCodeKeyDown(index, e)}
+                        disabled={emailLoading}
+                        className="w-12 h-12 sm:w-14 sm:h-14 text-center text-xl sm:text-2xl font-bold rounded-lg border-2 border-gray-300 focus:border-green-500 focus:ring-1 focus:ring-green-200 outline-none transition-all bg-white disabled:bg-gray-50"
+                        autoComplete="off"
+                      />
                     ))}
                   </div>
                   <div className="text-sm text-gray-600 mb-4">
@@ -254,13 +302,24 @@ const LoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
                   </div>
                 </div>
                 <div className="text-center">
-                  {countdown > 0 ? (<p className="text-sm text-gray-600">Resend code in <span className="font-semibold text-green-600">{countdown}s</span></p>) : (<button onClick={handleResendCode} disabled={loading} className="text-sm text-green-600 hover:text-green-700 font-medium disabled:opacity-50">Resend code</button>)}
+                  {countdown > 0
+                    ? (<p className="text-sm text-gray-600">Resend code in <span className="font-semibold text-green-600">{countdown}s</span></p>)
+                    : (<button type="button" onClick={handleResendCode} disabled={emailLoading} className="text-sm text-green-600 hover:text-green-700 font-medium disabled:opacity-50">Resend code</button>)
+                  }
                 </div>
-                <button onClick={handleCodeSubmit} disabled={loading || code.join('').length !== 6} className="w-full py-3 rounded-lg font-medium text-sm sm:text-base transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed bg-gradient-to-r from-green-600 to-green-700 text-white hover:shadow-md">
-                  {loading ? (<div className="flex items-center justify-center gap-2"><FaSpinner className="animate-spin" /><span>Verifying...</span></div>) : (<div className="flex items-center justify-center gap-2"><span>Submit</span><FiChevronRight className="text-lg" /></div>)}
+                <button
+                  type="button"
+                  onClick={handleCodeSubmit}
+                  disabled={emailLoading || code.join('').length !== 6}
+                  className="w-full py-3 rounded-lg font-medium text-sm sm:text-base transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed bg-gradient-to-r from-green-600 to-green-700 text-white hover:shadow-md"
+                >
+                  {emailLoading
+                    ? (<div className="flex items-center justify-center gap-2"><FaSpinner className="animate-spin" /><span>Verifying...</span></div>)
+                    : (<div className="flex items-center justify-center gap-2"><span>Submit</span><FiChevronRight className="text-lg" /></div>)
+                  }
                 </button>
                 <div className="text-center pt-4 border-t border-gray-200">
-                  <button onClick={handleBackToEmail} disabled={loading} className="text-sm text-gray-600 hover:text-gray-800 font-medium flex items-center justify-center gap-1 mx-auto disabled:opacity-50">
+                  <button type="button" onClick={handleBackToEmail} disabled={emailLoading} className="text-sm text-gray-600 hover:text-gray-800 font-medium flex items-center justify-center gap-1 mx-auto disabled:opacity-50">
                     <FiChevronLeft className="text-base" />Use different email
                   </button>
                 </div>
@@ -468,38 +527,37 @@ export default function MainHeader() {
     return numPrice.toFixed(2);
   };
 
- const fetchCart = useCallback(async () => {
-  try {
-    setCartLoading(true);
-    const token = localStorage.getItem('authToken');
-    const sessionId = localStorage.getItem('cartSessionId');
-    
-    const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/cart`, { 
-      withCredentials: true,
-      headers: {
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        ...(sessionId ? { 'x-session-id': sessionId } : {}),
-      }
-    });
-    
-    let items = [];
-    if (res.data?.items) items = res.data.items;
-    else if (Array.isArray(res.data)) items = res.data;
-    else if (res.data?.cart?.items) items = res.data.cart.items;
-    
-    // ✅ sessionId save karo
-    if (res.data?.sessionId) localStorage.setItem('cartSessionId', res.data.sessionId);
-    
-    setCart(items);
-    setCartCount(items.reduce((total, item) => total + (item.quantity || 1), 0));
-  } catch (error) {
-    console.error("Error fetching cart:", error);
-    setCart([]);
-    setCartCount(0);
-  } finally {
-    setCartLoading(false);
-  }
-}, []);
+  const fetchCart = useCallback(async () => {
+    try {
+      setCartLoading(true);
+      const token = localStorage.getItem('authToken');
+      const sessionId = localStorage.getItem('cartSessionId');
+
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/cart`, {
+        withCredentials: true,
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...(sessionId ? { 'x-session-id': sessionId } : {}),
+        }
+      });
+
+      let items = [];
+      if (res.data?.items) items = res.data.items;
+      else if (Array.isArray(res.data)) items = res.data;
+      else if (res.data?.cart?.items) items = res.data.cart.items;
+
+      if (res.data?.sessionId) localStorage.setItem('cartSessionId', res.data.sessionId);
+
+      setCart(items);
+      setCartCount(items.reduce((total, item) => total + (item.quantity || 1), 0));
+    } catch (error) {
+      console.error("Error fetching cart:", error);
+      setCart([]);
+      setCartCount(0);
+    } finally {
+      setCartLoading(false);
+    }
+  }, []);
 
   const fetchUser = useCallback(async () => {
     try {
@@ -560,20 +618,13 @@ export default function MainHeader() {
     return "User";
   };
 
-  // ✅ FIXED useEffect — no admin redirect here, dashboard handles it itself
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get('token');
 
     if (token) {
-      // Save token to localStorage
       localStorage.setItem('authToken', token);
-
-      // Clean URL immediately
       window.history.replaceState({}, document.title, window.location.pathname);
-
-      // Decode token and set user — NO router.push here
-      // Admin dashboard page handles its own auth check
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
         setUser({
@@ -586,12 +637,10 @@ export default function MainHeader() {
       } catch (e) {
         console.error('Failed to decode token:', e);
       }
-
       fetchCart();
       return;
     }
 
-    // Normal page load — no token in URL
     fetchUser();
     fetchCart();
   }, [fetchUser, fetchCart]);
@@ -699,67 +748,68 @@ export default function MainHeader() {
     setTimeout(() => { setShowCart(false); setIsClosingCart(false); }, 300);
   };
 
- const handleRemoveFromCart = async (itemId) => {
-  try {
-    const itemToRemove = cart.find(item => item.id === itemId || item._id === itemId);
-    if (itemToRemove) {
-      setCartCount(prev => Math.max(0, prev - (itemToRemove.quantity || 1)));
-      setCart(prev => prev.filter(item => item.id !== itemId && item._id !== itemId));
-    }
-
-    const token = localStorage.getItem('authToken');
-    const sessionId = localStorage.getItem('cartSessionId');
-
-    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart/${itemId}`, {
-      method: 'DELETE',
-      credentials: 'include',
-      headers: {
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        ...(sessionId ? { 'x-session-id': sessionId } : {}),
+  const handleRemoveFromCart = async (itemId) => {
+    try {
+      const itemToRemove = cart.find(item => item.id === itemId || item._id === itemId);
+      if (itemToRemove) {
+        setCartCount(prev => Math.max(0, prev - (itemToRemove.quantity || 1)));
+        setCart(prev => prev.filter(item => item.id !== itemId && item._id !== itemId));
       }
-    });
 
-    setCartMessage({ type: 'success', text: 'Item removed!', icon: '🗑️' });
-    const productId = itemToRemove?.product_id;
-    if (productId) window.dispatchEvent(new CustomEvent('enableAddToCart', { detail: { productId } }));
+      const token = localStorage.getItem('authToken');
+      const sessionId = localStorage.getItem('cartSessionId');
 
-  } catch (error) {
-    console.error("Failed to remove item:", error);
-    setCartMessage({ type: 'error', text: 'Failed to remove item.', icon: '❌' });
-    fetchCart();
-  }
-};
- const handleUpdateQuantity = async (itemId, newQuantity) => {
-  if (newQuantity < 1) { handleRemoveFromCart(itemId); return; }
-  try {
-    setIsUpdatingQuantity(itemId);
-    const updatedCart = cart.map(item => (item._id === itemId || item.id === itemId) ? { ...item, quantity: newQuantity } : item);
-    setCart(updatedCart);
-    setCartCount(updatedCart.reduce((total, item) => total + (item.quantity || 1), 0));
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart/${itemId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...(sessionId ? { 'x-session-id': sessionId } : {}),
+        }
+      });
 
-    const token = localStorage.getItem('authToken');
-    const sessionId = localStorage.getItem('cartSessionId');
+      setCartMessage({ type: 'success', text: 'Item removed!', icon: '🗑️' });
+      const productId = itemToRemove?.product_id;
+      if (productId) window.dispatchEvent(new CustomEvent('enableAddToCart', { detail: { productId } }));
 
-    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart/${itemId}`, {
-      method: 'PUT',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        ...(sessionId ? { 'x-session-id': sessionId } : {}),
-      },
-      body: JSON.stringify({ quantity: newQuantity })
-    });
+    } catch (error) {
+      console.error("Failed to remove item:", error);
+      setCartMessage({ type: 'error', text: 'Failed to remove item.', icon: '❌' });
+      fetchCart();
+    }
+  };
 
-    setCartMessage({ type: 'success', text: 'Quantity updated!', icon: '✅' });
-  } catch (error) {
-    console.error("Failed to update quantity:", error);
-    setCartMessage({ type: 'error', text: 'Failed to update quantity. Please try again.', icon: '❌' });
-    fetchCart();
-  } finally {
-    setIsUpdatingQuantity(null);
-  }
-};
+  const handleUpdateQuantity = async (itemId, newQuantity) => {
+    if (newQuantity < 1) { handleRemoveFromCart(itemId); return; }
+    try {
+      setIsUpdatingQuantity(itemId);
+      const updatedCart = cart.map(item => (item._id === itemId || item.id === itemId) ? { ...item, quantity: newQuantity } : item);
+      setCart(updatedCart);
+      setCartCount(updatedCart.reduce((total, item) => total + (item.quantity || 1), 0));
+
+      const token = localStorage.getItem('authToken');
+      const sessionId = localStorage.getItem('cartSessionId');
+
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/cart/${itemId}`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...(sessionId ? { 'x-session-id': sessionId } : {}),
+        },
+        body: JSON.stringify({ quantity: newQuantity })
+      });
+
+      setCartMessage({ type: 'success', text: 'Quantity updated!', icon: '✅' });
+    } catch (error) {
+      console.error("Failed to update quantity:", error);
+      setCartMessage({ type: 'error', text: 'Failed to update quantity. Please try again.', icon: '❌' });
+      fetchCart();
+    } finally {
+      setIsUpdatingQuantity(null);
+    }
+  };
 
   const getProductImageUrl = (product) => {
     if (!product) return '/placeholder.jpg';
