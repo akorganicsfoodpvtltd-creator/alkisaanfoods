@@ -44,10 +44,7 @@ export default function CertificationSection() {
           >
             <div
               className="font-bold text-white leading-none mb-1"
-              style={{
-                fontFamily: "Georgia, serif",
-                fontSize: "clamp(1.8rem, 7vw, 4.5rem)",
-              }}
+              style={{ fontFamily: "Georgia, serif", fontSize: "clamp(1.8rem, 7vw, 4.5rem)" }}
             >
               5+
             </div>
@@ -70,17 +67,14 @@ export default function CertificationSection() {
         {/* RIGHT — Single Ticker Row */}
         <div className="flex-1 overflow-hidden py-4">
           <div className="relative">
-            {/* Left fade */}
             <div
               className="absolute left-0 top-0 h-full w-12 z-10 pointer-events-none"
               style={{ background: "linear-gradient(to right, #ffffff, transparent)" }}
             />
-            {/* Right fade */}
             <div
               className="absolute right-0 top-0 h-full w-12 z-10 pointer-events-none"
               style={{ background: "linear-gradient(to left, #ffffff, transparent)" }}
             />
-
             <div className="flex overflow-hidden">
               <div
                 className="flex"
@@ -108,71 +102,12 @@ export default function CertificationSection() {
       <div className="mt-10 px-4 md:px-6 max-w-5xl mx-auto">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
           {[
-            {
-              // Image 6: 100% Quality laurel wreath
-              imgSrc: "/stat-quality.png",
-              imgAlt: "100% Quality",
-              num: "100%",
-              label: "Quality Compliance",
-            },
-            {
-              // Image 7: ISO globe logo
-              imgSrc: "/stat-iso.png",
-              imgAlt: "ISO International Standard",
-              num: "ISO",
-              label: "International Standard",
-            },
-            {
-              // Image 5: Halal Certified logo
-              imgSrc: "/stat-halal.png",
-              imgAlt: "Halal Certified",
-              num: "Halal",
-              label: "Certified",
-            },
-            {
-              // Image 8: 24/7 shield clock
-              imgSrc: "stat-24-7.png",
-              imgAlt: "24/7 Safety Monitoring",
-              num: "24/7",
-              label: "Safety Monitoring",
-            },
+            { imgSrc: "/stat-quality.png", imgAlt: "100% Quality", num: "100%", label: "Quality Compliance" },
+            { imgSrc: "/stat-iso.png", imgAlt: "ISO International Standard", num: "ISO", label: "International Standard" },
+            { imgSrc: "/stat-halal.png", imgAlt: "Halal Certified", num: "Halal", label: "Certified" },
+            { imgSrc: "/stat-24-7.png", imgAlt: "24/7 Safety Monitoring", num: "24/7", label: "Safety Monitoring" },
           ].map((s, i) => (
-            <div
-              key={i}
-              className="rounded-2xl text-center border border-gray-100 hover:border-green-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 flex flex-col items-center justify-center gap-1"
-              style={{ background: "#f8faf8", padding: "clamp(0.75rem, 2vw, 1.25rem)" }}
-            >
-              <div className="flex items-center justify-center" style={{ height: "2rem" }}>
-                <img
-                  src={s.imgSrc}
-                  alt={s.imgAlt}
-                  style={{
-                    width: "clamp(1.5rem, 4vw, 2rem)",
-                    height: "clamp(1.5rem, 4vw, 2rem)",
-                    objectFit: "contain",
-                    filter: "grayscale(100%) brightness(0)",
-                  }}
-                />
-              </div>
-              <div
-                className="font-bold text-green-700"
-                style={{
-                  fontFamily: "Georgia, serif",
-                  fontSize: "clamp(0.9rem, 3vw, 1.5rem)",
-                }}
-              >
-                {s.num}
-              </div>
-              <div
-                className="text-gray-500 tracking-wide uppercase"
-                style={{
-                  fontFamily: "system-ui",
-                  fontSize: "clamp(0.55rem, 1.5vw, 0.75rem)",
-                }}
-              >
-                {s.label}
-              </div>
-            </div>
+            <StatCard key={i} {...s} />
           ))}
         </div>
       </div>
@@ -181,84 +116,12 @@ export default function CertificationSection() {
       <div className="mt-4 px-4 md:px-6 max-w-5xl mx-auto">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
           {[
-            {
-              // Image 1: Cash on Delivery hand + box icon
-              imgSrc: "/trust-cod.png",
-              imgAlt: "Cash on Delivery",
-              num: "Cash on Delivery",
-              label: "All Over Pakistan",
-              desc: "Order now, pay when it arrives at your door",
-            },
-            {
-              // Image 2: Fast Delivery truck logo
-              imgSrc: "/trust-fast-delivery.png",
-              imgAlt: "Fast Delivery",
-              num: "Fast Delivery",
-              label: "Nationwide Shipping",
-              desc: "Swift & reliable delivery to your doorstep",
-            },
-            {
-              // Image 4: Happy Customers people with hearts
-              imgSrc: "/trust-happy-customers.png",
-              imgAlt: "Happy Customers",
-              num: "100,000+",
-              label: "Happy Customers",
-              desc: "Thousands of satisfied customers across Pakistan",
-            },
-            {
-              // Image 3: 14 Days Easy Return money back guarantee stamp
-              imgSrc: "/trust-14-days.png",
-              imgAlt: "14 Days Easy Return",
-              num: "14 Days",
-              label: "Happiness Guarantee",
-              desc: "Not satisfied? Full money back, no questions asked",
-            },
+            { imgSrc: "/trust-cod.png", imgAlt: "Cash on Delivery", num: "Cash on Delivery", label: "All Over Pakistan", desc: "Order now, pay when it arrives at your door" },
+            { imgSrc: "/trust-fast-delivery.png", imgAlt: "Fast Delivery", num: "Fast Delivery", label: "Nationwide Shipping", desc: "Swift & reliable delivery to your doorstep" },
+            { imgSrc: "/trust-happy-customers.png", imgAlt: "Happy Customers", num: "100,000+", label: "Happy Customers", desc: "Thousands of satisfied customers across Pakistan" },
+            { imgSrc: "/trust-14-days.png", imgAlt: "14 Days Easy Return", num: "14 Days", label: "Happiness Guarantee", desc: "Not satisfied? Full money back, no questions asked" },
           ].map((s, i) => (
-            <div
-              key={i}
-              className="rounded-2xl text-center border border-gray-100 hover:border-green-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 flex flex-col items-center justify-center gap-1"
-              style={{ background: "#f8faf8", padding: "clamp(0.75rem, 2vw, 1.25rem)" }}
-            >
-              <div
-                className="flex items-center justify-center rounded-full bg-green-100"
-                style={{ width: "2.25rem", height: "2.25rem" }}
-              >
-                <img
-                  src={s.imgSrc}
-                  alt={s.imgAlt}
-                  style={{
-                    width: "clamp(1.1rem, 3vw, 1.4rem)",
-                    height: "clamp(1.1rem, 3vw, 1.4rem)",
-                    objectFit: "contain",
-                    filter: "grayscale(100%) brightness(0)",
-                  }}
-                />
-              </div>
-              <div
-                className="font-bold text-green-700"
-                style={{
-                  fontFamily: "Georgia, serif",
-                  fontSize: "clamp(0.75rem, 2.5vw, 1rem)",
-                }}
-              >
-                {s.num}
-              </div>
-              <div
-                className="text-gray-500 tracking-wide uppercase"
-                style={{
-                  fontFamily: "system-ui",
-                  fontSize: "clamp(0.55rem, 1.5vw, 0.75rem)",
-                }}
-              >
-                {s.label}
-              </div>
-              <div
-                className="text-gray-400 leading-snug"
-                style={{ fontSize: "clamp(0.5rem, 1.4vw, 0.7rem)" }}
-              >
-                {s.desc}
-              </div>
-            </div>
+            <TrustCard key={i} {...s} />
           ))}
         </div>
       </div>
@@ -273,33 +136,143 @@ export default function CertificationSection() {
   );
 }
 
-/* Circle logo + name below */
+/* ── Stat Box ── */
+function StatCard({ imgSrc, imgAlt, num, label }) {
+  const [error, setError] = useState(false);
+
+  return (
+    <div
+      className="rounded-2xl text-center border border-gray-100 hover:border-green-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 flex flex-col items-center justify-center gap-2"
+      style={{
+        background: "#ffffff",
+        padding: "clamp(1rem, 2.5vw, 1.5rem)",
+        boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
+      }}
+    >
+      {/* Image wrapper — white bg, no mismatch */}
+      <div
+        className="flex items-center justify-center rounded-xl"
+        style={{
+          width: "clamp(3rem, 8vw, 4.5rem)",
+          height: "clamp(3rem, 8vw, 4.5rem)",
+          background: "#ffffff",
+          border: "1.5px solid #e5e7eb",
+          padding: "0.4rem",
+        }}
+      >
+        {!error ? (
+          <img
+            src={imgSrc}
+            alt={imgAlt}
+            onError={() => setError(true)}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "contain",
+            }}
+          />
+        ) : (
+          <span style={{ fontSize: "1.8rem" }}>✅</span>
+        )}
+      </div>
+
+      <div
+        className="font-bold text-green-700"
+        style={{ fontFamily: "Georgia, serif", fontSize: "clamp(1rem, 3vw, 1.6rem)" }}
+      >
+        {num}
+      </div>
+      <div
+        className="text-gray-500 tracking-wide uppercase"
+        style={{ fontFamily: "system-ui", fontSize: "clamp(0.55rem, 1.5vw, 0.75rem)" }}
+      >
+        {label}
+      </div>
+    </div>
+  );
+}
+
+/* ── Trust Card ── */
+function TrustCard({ imgSrc, imgAlt, num, label, desc }) {
+  const [error, setError] = useState(false);
+
+  return (
+    <div
+      className="rounded-2xl text-center border border-gray-100 hover:border-green-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 flex flex-col items-center justify-center gap-2"
+      style={{
+        background: "#ffffff",
+        padding: "clamp(1rem, 2.5vw, 1.5rem)",
+        boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
+      }}
+    >
+      {/* Image wrapper — white bg matches image background */}
+      <div
+        className="flex items-center justify-center rounded-xl"
+        style={{
+          width: "clamp(3rem, 8vw, 4.5rem)",
+          height: "clamp(3rem, 8vw, 4.5rem)",
+          background: "#ffffff",
+          border: "1.5px solid #e5e7eb",
+          padding: "0.4rem",
+        }}
+      >
+        {!error ? (
+          <img
+            src={imgSrc}
+            alt={imgAlt}
+            onError={() => setError(true)}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "contain",
+            }}
+          />
+        ) : (
+          <span style={{ fontSize: "1.8rem" }}>✅</span>
+        )}
+      </div>
+
+      <div
+        className="font-bold text-green-700"
+        style={{ fontFamily: "Georgia, serif", fontSize: "clamp(0.8rem, 2.5vw, 1.1rem)" }}
+      >
+        {num}
+      </div>
+      <div
+        className="text-gray-500 tracking-wide uppercase"
+        style={{ fontFamily: "system-ui", fontSize: "clamp(0.55rem, 1.5vw, 0.75rem)" }}
+      >
+        {label}
+      </div>
+      <div
+        className="text-gray-400 leading-snug"
+        style={{ fontSize: "clamp(0.5rem, 1.4vw, 0.7rem)" }}
+      >
+        {desc}
+      </div>
+    </div>
+  );
+}
+
+/* ── Cert Circle (ticker) ── */
 function CertCircle({ cert, hasError, onError }) {
   return (
     <div className="flex flex-col items-center flex-shrink-0 cursor-default group" style={{ gap: "6px" }}>
-      {/* Circle */}
       <div
         className="rounded-full bg-white border-2 border-green-100 shadow-md flex items-center justify-center overflow-hidden transition-all duration-300 group-hover:border-green-400 group-hover:shadow-lg group-hover:-translate-y-1"
-        style={{
-          width: "clamp(2.8rem, 8vw, 5rem)",
-          height: "clamp(2.8rem, 8vw, 5rem)",
-        }}
+        style={{ width: "clamp(2.8rem, 8vw, 5rem)", height: "clamp(2.8rem, 8vw, 5rem)" }}
       >
         {!hasError ? (
-          <Image
+          <img
             src={cert.logo}
             alt={cert.name}
-            width={52}
-            height={52}
-            className="object-contain p-1.5"
             onError={onError}
+            style={{ width: "75%", height: "75%", objectFit: "contain" }}
           />
         ) : (
           <span className="text-green-700 text-sm font-bold">✓</span>
         )}
       </div>
-
-      {/* Name below circle */}
       <span
         className="text-gray-600 font-medium text-center leading-tight"
         style={{
