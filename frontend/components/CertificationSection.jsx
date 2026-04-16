@@ -131,7 +131,7 @@ export default function CertificationSection() {
             },
             {
               // Image 8: 24/7 shield clock
-              imgSrc: "/stat-24-7.png",
+              imgSrc: "https://res.cloudinary.com/drq7cljyn/image/upload/v1776317936/stat-24-7_v23o5b.png",
               imgAlt: "24/7 Safety Monitoring",
               num: "24/7",
               label: "Safety Monitoring",
