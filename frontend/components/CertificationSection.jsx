@@ -109,30 +109,30 @@ export default function CertificationSection() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
           {[
             {
-              icon: <span style={{ fontSize: "16px", fontWeight: "bold", color: "#15803d" }}>✓</span>,
+              // Image 6: 100% Quality laurel wreath
+              imgSrc: "/stat-quality.png",
+              imgAlt: "100% Quality",
               num: "100%",
               label: "Quality Compliance",
             },
             {
-              icon: <span style={{ fontSize: "16px" }}>🌍</span>,
+              // Image 7: ISO globe logo
+              imgSrc: "/stat-iso.png",
+              imgAlt: "ISO International Standard",
               num: "ISO",
               label: "International Standard",
             },
             {
-              icon: (
-                <svg width="20" height="20" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path
-                    d="M14 4C10.134 4 7 7.134 7 11C7 14.866 10.134 18 14 18C15.393 18 16.69 17.594 17.78 16.9C16.11 16.613 14.6 15.77 13.46 14.54C11.94 12.9 11.1 10.76 11.1 8.5C11.1 6.9 11.54 5.41 12.3 4.13C12.87 4.046 13.43 4 14 4Z"
-                    fill="#16a34a"
-                  />
-                  <circle cx="19" cy="9" r="2" fill="#16a34a" />
-                </svg>
-              ),
+              // Image 5: Halal Certified logo
+              imgSrc: "/stat-halal.png",
+              imgAlt: "Halal Certified",
               num: "Halal",
               label: "Certified",
             },
             {
-              icon: <span style={{ fontSize: "16px" }}>🛡️</span>,
+              // Image 8: 24/7 shield clock
+              imgSrc: "/stat-24-7.png",
+              imgAlt: "24/7 Safety Monitoring",
               num: "24/7",
               label: "Safety Monitoring",
             },
@@ -142,7 +142,18 @@ export default function CertificationSection() {
               className="rounded-2xl text-center border border-gray-100 hover:border-green-200 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 flex flex-col items-center justify-center gap-1"
               style={{ background: "#f8faf8", padding: "clamp(0.75rem, 2vw, 1.25rem)" }}
             >
-              <div className="flex items-center justify-center" style={{ height: "1.5rem" }}>{s.icon}</div>
+              <div className="flex items-center justify-center" style={{ height: "2rem" }}>
+                <img
+                  src={s.imgSrc}
+                  alt={s.imgAlt}
+                  style={{
+                    width: "clamp(1.5rem, 4vw, 2rem)",
+                    height: "clamp(1.5rem, 4vw, 2rem)",
+                    objectFit: "contain",
+                    filter: "grayscale(100%) brightness(0)",
+                  }}
+                />
+              </div>
               <div
                 className="font-bold text-green-700"
                 style={{
@@ -171,54 +182,33 @@ export default function CertificationSection() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
           {[
             {
-              icon: (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <rect x="1" y="13" width="4" height="7" rx="1" fill="#15803d" />
-                  <path d="M5 14H14.5C15.88 14 17 13.1 17 12H9V10H18.5C19.88 10 21 10.9 21 12L18 19H5V14Z" fill="#15803d" />
-                  <circle cx="7" cy="20" r="1.5" fill="#15803d" />
-                  <circle cx="16" cy="20" r="1.5" fill="#15803d" />
-                </svg>
-              ),
+              // Image 1: Cash on Delivery hand + box icon
+              imgSrc: "/trust-cod.png",
+              imgAlt: "Cash on Delivery",
               num: "Cash on Delivery",
               label: "All Over Pakistan",
               desc: "Order now, pay when it arrives at your door",
             },
             {
-              icon: (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M3 8H16V17H3z" rx="1" fill="#15803d" opacity="0.2" />
-                  <rect x="3" y="8" width="13" height="9" rx="1" stroke="#15803d" strokeWidth="1.5" fill="none" />
-                  <path d="M16 10H19L21 13V17H16V10Z" fill="#15803d" opacity="0.15" stroke="#15803d" strokeWidth="1.5" strokeLinejoin="round" />
-                  <circle cx="7" cy="18.5" r="1.5" fill="#15803d" />
-                  <circle cx="18" cy="18.5" r="1.5" fill="#15803d" />
-                  <path d="M6 5L10 5M8 5L8 8" stroke="#15803d" strokeWidth="1.5" strokeLinecap="round" />
-                </svg>
-              ),
+              // Image 2: Fast Delivery truck logo
+              imgSrc: "/trust-fast-delivery.png",
+              imgAlt: "Fast Delivery",
               num: "Fast Delivery",
               label: "Nationwide Shipping",
               desc: "Swift & reliable delivery to your doorstep",
             },
             {
-              icon: (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="9" cy="7" r="3" fill="#15803d" opacity="0.25" stroke="#15803d" strokeWidth="1.5" />
-                  <circle cx="17" cy="7" r="2" fill="#15803d" opacity="0.15" stroke="#15803d" strokeWidth="1.5" />
-                  <path d="M2 19C2 16.24 5.13 14 9 14C12.87 14 16 16.24 16 19" stroke="#15803d" strokeWidth="1.5" strokeLinecap="round" />
-                  <path d="M16 14C18.21 14 20 15.57 20 17.5" stroke="#15803d" strokeWidth="1.5" strokeLinecap="round" />
-                  <path d="M7 21L9 19L11 21" stroke="#15803d" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              ),
+              // Image 4: Happy Customers people with hearts
+              imgSrc: "/trust-happy-customers.png",
+              imgAlt: "Happy Customers",
               num: "100,000+",
               label: "Happy Customers",
               desc: "Thousands of satisfied customers across Pakistan",
             },
             {
-              icon: (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 3L4 6V12C4 16.42 7.5 20.57 12 21C16.5 20.57 20 16.42 20 12V6L12 3Z" fill="#15803d" opacity="0.15" stroke="#15803d" strokeWidth="1.5" strokeLinejoin="round" />
-                  <path d="M9 12L11 14L15 10" stroke="#15803d" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              ),
+              // Image 3: 14 Days Easy Return money back guarantee stamp
+              imgSrc: "/trust-14-days.png",
+              imgAlt: "14 Days Easy Return",
               num: "14 Days",
               label: "Happiness Guarantee",
               desc: "Not satisfied? Full money back, no questions asked",
@@ -233,7 +223,16 @@ export default function CertificationSection() {
                 className="flex items-center justify-center rounded-full bg-green-100"
                 style={{ width: "2.25rem", height: "2.25rem" }}
               >
-                {s.icon}
+                <img
+                  src={s.imgSrc}
+                  alt={s.imgAlt}
+                  style={{
+                    width: "clamp(1.1rem, 3vw, 1.4rem)",
+                    height: "clamp(1.1rem, 3vw, 1.4rem)",
+                    objectFit: "contain",
+                    filter: "grayscale(100%) brightness(0)",
+                  }}
+                />
               </div>
               <div
                 className="font-bold text-green-700"
