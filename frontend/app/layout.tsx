@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import TopHeader from "@/components/TopHeader";
 import MainHeader from "@/components/MainHeader";
 import HeadlineTicker from "@/components/HeadlineTicker";
 import FooterSection from "@/components/FooterSection";
 import Chatbot from "@/components/FloatingChatbot";
-import { GoogleAnalytics } from "@next/third-parties/google"; // ✅ 1. IMPORT ADD KARO
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,13 +34,24 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="bg-white text-gray-900">
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-8G5VFWP8SH"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-8G5VFWP8SH');
+          `}
+        </Script>
         <TopHeader />
         <MainHeader />
         <HeadlineTicker />
         {children}
         <FooterSection />
         <Chatbot />
-        <GoogleAnalytics gaId="G-8G5VFWP8SH" /> {/* ✅ 2. COMPONENT ADD KARO */}
       </body>
     </html>
   );
