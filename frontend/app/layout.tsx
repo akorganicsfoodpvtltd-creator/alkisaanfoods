@@ -1,18 +1,17 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-
 import TopHeader from "@/components/TopHeader";
 import MainHeader from "@/components/MainHeader";
 import HeadlineTicker from "@/components/HeadlineTicker";
-import FooterSection from "@/components/FooterSection"; // ✅ FOOTER IMPORT
+import FooterSection from "@/components/FooterSection";
 import Chatbot from "@/components/FloatingChatbot";
+import { GoogleAnalytics } from "@next/third-parties/google"; // ✅ 1. IMPORT ADD KARO
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
 });
-
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
@@ -34,16 +33,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-     <body className="bg-white text-gray-900">
-        {/* COMMON HEADERS */}
+      <body className="bg-white text-gray-900">
         <TopHeader />
         <MainHeader />
         <HeadlineTicker />
-
-        {/* PAGE CONTENT */}
         {children}
-            <FooterSection />
-            <Chatbot />
+        <FooterSection />
+        <Chatbot />
+        <GoogleAnalytics gaId="G-8G5VFWP8SH" /> {/* ✅ 2. COMPONENT ADD KARO */}
       </body>
     </html>
   );
